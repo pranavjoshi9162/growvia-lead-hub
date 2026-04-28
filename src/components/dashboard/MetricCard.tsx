@@ -13,7 +13,7 @@ interface MetricCardProps {
 export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className }: MetricCardProps) {
   const styles = {
     default: "bg-card border-border",
-    soft: "border-primary/15 bg-[var(--gradient-soft)]",
+    soft: "border-primary/20 bg-soft-gradient",
     danger: "border-destructive/30 bg-destructive/5",
     warning: "border-warning/30 bg-warning/5",
   }[variant];

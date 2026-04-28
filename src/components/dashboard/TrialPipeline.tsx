@@ -14,7 +14,7 @@ export function TrialPipeline() {
       <p className="text-sm text-muted-foreground mb-4">Keep trials moving before they expire.</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {items.map((it) => (
-          <div key={it.label} className={`rounded-xl border p-4 ${it.soft ? "border-primary/30 bg-[var(--gradient-soft)]" : "border-border"}`}>
+          <div key={it.label} className={`rounded-xl border p-4 ${it.soft ? "border-primary/30 bg-soft-gradient" : "border-border"}`}>
             <div className="flex items-start justify-between">
               <div className={`h-8 w-8 rounded-lg grid place-items-center ${it.soft ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
                 <it.icon className="h-4 w-4" />
