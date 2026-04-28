@@ -187,7 +187,7 @@ export default function AllLeads() {
               {filtered.map((l) => {
                 const isExp = expanded.has(l.id);
                 return (
-                  <>
+                  <Fragment key={l.id}>
                     <tr key={l.id} className="border-t border-border hover:bg-secondary/30">
                       <td className="py-3 pl-4 pr-2">
                         <button onClick={() => toggleExpand(l.id)} className="text-muted-foreground hover:text-foreground">
