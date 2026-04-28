@@ -29,6 +29,12 @@ export interface TimelineEntry {
   timestamp: string;
 }
 
+export type BusinessType = "Restaurant" | "Salon" | "Other";
+export type DemoType = "Onsite" | "Online" | "Phone";
+
+export const BUSINESS_TYPES: BusinessType[] = ["Restaurant", "Salon", "Other"];
+export const DEMO_TYPES: DemoType[] = ["Onsite", "Online", "Phone"];
+
 export interface Lead {
   id: string;
   name: string;
@@ -44,6 +50,19 @@ export interface Lead {
   createdAt: string;
   notes?: string;
   timeline: TimelineEntry[];
+  // Business details
+  outletAddress?: string;
+  outletsCount?: number;
+  staffCount?: number;
+  currentPlatform?: string;
+  businessType?: BusinessType;
+  // Notes
+  clientNotes?: string;
+  internalNotes?: string;
+  // Demo
+  demoType?: DemoType;
+  demoDate?: string;
+  demoOutcome?: string;
 }
 
 const today = new Date();

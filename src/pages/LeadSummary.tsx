@@ -11,6 +11,7 @@ import { TrialPipeline } from "@/components/dashboard/TrialPipeline";
 import { UpcomingFollowUps } from "@/components/dashboard/UpcomingFollowUps";
 import { ClientActivityMonitor } from "@/components/dashboard/ClientActivityMonitor";
 import { ConversionCycleChart } from "@/components/dashboard/ConversionCycleChart";
+import { LeadStageBreakdown } from "@/components/dashboard/LeadStageBreakdown";
 
 export default function LeadSummary() {
   const [range, setRange] = useState<DateRange>("month");
@@ -100,9 +101,10 @@ export default function LeadSummary() {
         <UpcomingFollowUps />
       </section>
 
-      {/* Conversion Cycle */}
-      <section>
+      {/* Analytics: Conversion Cycle + Stage Breakdown */}
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <ConversionCycleChart />
+        <LeadStageBreakdown />
       </section>
     </div>
   );
