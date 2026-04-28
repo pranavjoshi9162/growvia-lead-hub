@@ -1,0 +1,71 @@
+import { createContext, useContext, useState, ReactNode } from "react";
+import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry } from "@/lib/sampleData";
+
+interface LeadsCtx {
+  leads: Lead[];
+  addLead: (l: Omit<Lead, "id" | "createdAt" | "timeline"> & { notes?: string }) => void;
+  updateLead: (id: string, patch: Partial<Lead>) => void;
+  appendTimeline: (id: string, entry: Omit<TimelineEntry, "id" | "timestamp">) => void;
+  setStatus: (id: string, status: LeadStatus, substatus?: string, notes?: string, followUpDate?: string) => void;
+}
+
+const Ctx = createContext<LeadsCtx | null>(null);
+
+export function LeadsProvider({ children }: { children: ReactNode }) {
+  const [leads, setLeads] = useState<Lead[]>(SAMPLE_LEADS);
+
+  const addLead: LeadsCtx["addLead"] = (l) => {
+    const id = `L-${1000 + leads.length + 1}`;
+    const created = new Date().toISOString();
+    const newLead: Lead = {
+      ...l,
+      id,
+      createdAt: created,
+      timeline: [{ id: "t1", status: l.status, substatus: l.substatus, notes: l.notes, followUpDate: l.nextFollowUp, timestamp: created }],
+    };
+    setLeads((prev) => [newLead, ...prev]);
+  };
+
+  const updateLead: LeadsCtx["updateLead"] = (id, patch) => {
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  };
+
+  const appendTimeline: LeadsCtx["appendTimeline"] = (id, entry) => {
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === id
+          ? {
+              ...l,
+              timeline: [...l.timeline, { ...entry, id: `t${l.timeline.length + 1}`, timestamp: new Date().toISOString() }],
+            }
+          : l
+      )
+    );
+  };
+
+  const setStatus: LeadsCtx["setStatus"] = (id, status, substatus, notes, followUpDate) => {
+    setLeads((prev) =>
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        return {
+          ...l,
+          status,
+          substatus,
+          nextFollowUp: followUpDate ?? l.nextFollowUp,
+          timeline: [
+            ...l.timeline,
+            { id: `t${l.timeline.length + 1}`, status, substatus, notes, followUpDate, timestamp: new Date().toISOString() },
+          ],
+        };
+      })
+    );
+  };
+
+  return <Ctx.Provider value={{ leads, addLead, updateLead, appendTimeline, setStatus }}>{children}</Ctx.Provider>;
+}
+
+export function useLeads() {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("useLeads must be used inside LeadsProvider");
+  return ctx;
+}
