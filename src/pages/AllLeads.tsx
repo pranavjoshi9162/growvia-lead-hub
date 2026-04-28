@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, Fragment } from "react";
 import { format, isToday } from "date-fns";
 import {
   Search, Plus, ChevronDown, ChevronRight, MoreHorizontal, Edit, RefreshCcw,
@@ -266,7 +266,7 @@ export default function AllLeads() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>
