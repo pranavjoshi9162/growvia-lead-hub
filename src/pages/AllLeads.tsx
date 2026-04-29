@@ -96,10 +96,10 @@ export default function AllLeads() {
       {/* Overview cards */}
       <section>
         <div className="section-label">Leads Overview</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard variant="soft" icon={Users} value={total} label="Total Leads" sublabel="This month" />
-          <MetricCard icon={TrendingUp} value={high} label="High Potential" sublabel="Hot leads" />
-          <MetricCard icon={TrendingDown} value={low} label="Low Potential" sublabel="Nurture later" />
+          <MetricCard icon={TrendingUp} value={high} label="High Potential" sublabel="Hot Leads" />
+          <MetricCard icon={TrendingDown} value={low} label="Low Potential" sublabel="Cold Leads" />
           <MetricCard icon={Clock} value={followUp} label="Follow-up Leads" sublabel="Awaiting" />
           <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Scheduled" sublabel="This month" />
           <MetricCard icon={Monitor} value={demoGiven} label="Demo Given" sublabel="This month" />
@@ -110,7 +110,7 @@ export default function AllLeads() {
 
       <section>
         <div className="section-label">Follow-ups</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" />
           <MetricCard variant="soft" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" />
           <MetricCard variant="danger" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" />
