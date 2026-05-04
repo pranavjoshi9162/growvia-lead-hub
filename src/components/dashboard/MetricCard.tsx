@@ -8,9 +8,10 @@ interface MetricCardProps {
   icon?: LucideIcon;
   variant?: "default" | "soft" | "danger" | "warning";
   className?: string;
+  onClick?: () => void;
 }
 
-export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className }: MetricCardProps) {
+export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick }: MetricCardProps) {
   const styles = {
     default: "bg-card border-border",
     soft: "border-primary/20 bg-soft-gradient",
@@ -25,8 +26,23 @@ export function MetricCard({ value, label, sublabel, icon: Icon, variant = "defa
     warning: "bg-warning/15 text-warning",
   }[variant];
 
+  const interactive = onClick
+    ? "cursor-pointer hover:-translate-y-0.5 hover:border-primary/40 active:translate-y-0"
+    : "";
+
+  const Comp: any = onClick ? "button" : "div";
+
   return (
-    <div className={cn("rounded-xl border p-4 transition-all hover:shadow-[var(--shadow-card)]", styles, className)}>
+    <Comp
+      onClick={onClick}
+      type={onClick ? "button" : undefined}
+      className={cn(
+        "w-full text-left rounded-xl border p-4 transition-all hover:shadow-[var(--shadow-card)]",
+        styles,
+        interactive,
+        className
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="text-2xl font-bold tracking-tight text-foreground">{value}</div>
@@ -39,6 +55,6 @@ export function MetricCard({ value, label, sublabel, icon: Icon, variant = "defa
           </div>
         )}
       </div>
-    </div>
+    </Comp>
   );
 }
