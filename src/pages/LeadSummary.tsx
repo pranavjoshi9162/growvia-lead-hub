@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users, CreditCard, Hourglass, UserCheck, Flame, AlertTriangle, CalendarX,
   Megaphone, TrendingUp, TrendingDown, PhoneCall, Monitor, CheckCircle2, XCircle,
@@ -13,9 +14,34 @@ import { UpcomingFollowUps } from "@/components/dashboard/UpcomingFollowUps";
 import { ClientActivityMonitor } from "@/components/dashboard/ClientActivityMonitor";
 import { ConversionCycleChart } from "@/components/dashboard/ConversionCycleChart";
 import { LeadStageBreakdown } from "@/components/dashboard/LeadStageBreakdown";
+import { DrillDownDrawer } from "@/components/dashboard/DrillDownDrawer";
+import { ClientsList } from "@/components/dashboard/ClientsList";
+import { SalesBreakdown } from "@/components/dashboard/SalesBreakdown";
+import { FollowUpsList } from "@/components/dashboard/FollowUpsList";
+import { ClientStatus } from "@/lib/clientsData";
+
+type ClientFilter = ClientStatus | "All" | "Active";
+type SalesFilter = "Closed" | "TrialToPaid" | "Conversion" | "MRR";
+type FollowFilter = "All" | "Today" | "Missed" | "Completed";
 
 export default function LeadSummary() {
   const [range, setRange] = useState<DateRange>("month");
+  const navigate = useNavigate();
+
+  const [clientDrawer, setClientDrawer] = useState<{ open: boolean; filter: ClientFilter; title: string }>({
+    open: false, filter: "All", title: "",
+  });
+  const [salesDrawer, setSalesDrawer] = useState<{ open: boolean; filter: SalesFilter; title: string }>({
+    open: false, filter: "Closed", title: "",
+  });
+  const [followDrawer, setFollowDrawer] = useState<{ open: boolean; filter: FollowFilter; title: string }>({
+    open: false, filter: "All", title: "",
+  });
+
+  const goLeads = (filter: string) => navigate(`/leads?filter=${encodeURIComponent(filter)}`);
+  const openClients = (filter: ClientFilter, title: string) => setClientDrawer({ open: true, filter, title });
+  const openSales = (filter: SalesFilter, title: string) => setSalesDrawer({ open: true, filter, title });
+  const openFollow = (filter: FollowFilter, title: string) => setFollowDrawer({ open: true, filter, title });
 
   return (
     <div className="space-y-8 max-w-[1500px] mx-auto">
@@ -32,13 +58,20 @@ export default function LeadSummary() {
       <section>
         <div className="section-label">Clients</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard variant="soft" icon={Users} value={18} label="Total Clients" sublabel="This month" />
-          <MetricCard variant="soft" icon={CreditCard} value={11} label="Paid Clients" sublabel="This month" />
-          <MetricCard variant="soft" icon={Hourglass} value={7} label="Trial Clients" sublabel="Today" />
-          <MetricCard variant="soft" icon={UserCheck} value={16} label="Active Accounts" sublabel="This month" />
-          <MetricCard variant="warning" icon={Flame} value={3} label="Trial Expiring" sublabel="Next 7 days" />
-          <MetricCard variant="danger" icon={AlertTriangle} value={2} label="Payment Overdue" sublabel="Needs action" />
-          <MetricCard variant="warning" icon={CalendarX} value={4} label="Plan Expiry" sublabel="This month" />
+          <MetricCard variant="soft" icon={Users} value={18} label="Total Clients" sublabel="This month"
+            onClick={() => openClients("All", "Total Clients")} />
+          <MetricCard variant="soft" icon={CreditCard} value={11} label="Paid Clients" sublabel="This month"
+            onClick={() => openClients("Paid", "Paid Clients")} />
+          <MetricCard variant="soft" icon={Hourglass} value={7} label="Trial Clients" sublabel="Today"
+            onClick={() => openClients("Trial", "Trial Clients")} />
+          <MetricCard variant="soft" icon={UserCheck} value={16} label="Active Accounts" sublabel="This month"
+            onClick={() => openClients("Active", "Active Accounts")} />
+          <MetricCard variant="warning" icon={Flame} value={3} label="Trial Expiring" sublabel="Next 7 days"
+            onClick={() => openClients("TrialExpiring", "Trial Expiring Clients")} />
+          <MetricCard variant="danger" icon={AlertTriangle} value={2} label="Payment Overdue" sublabel="Needs action"
+            onClick={() => openClients("Overdue", "Payment Overdue Clients")} />
+          <MetricCard variant="warning" icon={CalendarX} value={4} label="Plan Expiry" sublabel="This month"
+            onClick={() => openClients("PlanExpiry", "Plan Expiry Clients")} />
         </div>
       </section>
 
@@ -56,14 +89,22 @@ export default function LeadSummary() {
       <section>
         <div className="section-label">Leads</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard icon={Megaphone} value={124} label="Total Leads" sublabel="This month" />
-          <MetricCard icon={TrendingUp} value={48} label="High Potential" sublabel="Hot Leads" />
-          <MetricCard icon={TrendingDown} value={32} label="Low Potential" sublabel="Cold Leads" />
-          <MetricCard icon={PhoneCall} value={9} label="Follow-up Leads" sublabel="Awaiting" />
-          <MetricCard icon={CalendarClock} value={4} label="Demo Scheduled" sublabel="This week" />
-          <MetricCard icon={Monitor} value={7} label="Demo Given" sublabel="This month" />
-          <MetricCard icon={CheckCircle2} value={6} label="Converted" sublabel="Closed won" />
-          <MetricCard icon={XCircle} value={3} label="Lost" sublabel="Closed lost" />
+          <MetricCard icon={Megaphone} value={124} label="Total Leads" sublabel="This month"
+            onClick={() => goLeads("all")} />
+          <MetricCard icon={TrendingUp} value={48} label="High Potential" sublabel="Hot Leads"
+            onClick={() => goLeads("high")} />
+          <MetricCard icon={TrendingDown} value={32} label="Low Potential" sublabel="Cold Leads"
+            onClick={() => goLeads("low")} />
+          <MetricCard icon={PhoneCall} value={9} label="Follow-up Leads" sublabel="Awaiting"
+            onClick={() => goLeads("follow-up")} />
+          <MetricCard icon={CalendarClock} value={4} label="Demo Scheduled" sublabel="This week"
+            onClick={() => goLeads("demo-scheduled")} />
+          <MetricCard icon={Monitor} value={7} label="Demo Given" sublabel="This month"
+            onClick={() => goLeads("demo-given")} />
+          <MetricCard icon={CheckCircle2} value={6} label="Converted" sublabel="Closed won"
+            onClick={() => goLeads("converted")} />
+          <MetricCard icon={XCircle} value={3} label="Lost" sublabel="Closed lost"
+            onClick={() => goLeads("lost")} />
         </div>
       </section>
 
@@ -71,10 +112,14 @@ export default function LeadSummary() {
       <section>
         <div className="section-label">Sales</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard variant="soft" icon={Briefcase} value={3} label="Closed Sales" sublabel="This month" />
-          <MetricCard variant="soft" icon={ArrowUpRight} value={6} label="Trial → Paid" sublabel="This month" />
-          <MetricCard variant="soft" icon={Target} value="60%" label="Conversion Rate" sublabel="This month" />
-          <MetricCard variant="soft" icon={IndianRupee} value="₹36K" label="Monthly Recurring Revenue" sublabel="This month" />
+          <MetricCard variant="soft" icon={Briefcase} value={3} label="Closed Sales" sublabel="This month"
+            onClick={() => openSales("Closed", "Closed Sales")} />
+          <MetricCard variant="soft" icon={ArrowUpRight} value={6} label="Trial → Paid" sublabel="This month"
+            onClick={() => openSales("TrialToPaid", "Trial → Paid Conversions")} />
+          <MetricCard variant="soft" icon={Target} value="60%" label="Conversion Rate" sublabel="This month"
+            onClick={() => openSales("Conversion", "Conversion Rate Breakdown")} />
+          <MetricCard variant="soft" icon={IndianRupee} value="₹36K" label="Monthly Recurring Revenue" sublabel="This month"
+            onClick={() => openSales("MRR", "Monthly Recurring Revenue")} />
         </div>
       </section>
 
@@ -82,10 +127,14 @@ export default function LeadSummary() {
       <section>
         <div className="section-label">Follow-ups</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard icon={ListChecks} value={6} label="Total Follow-ups" sublabel="Open" />
-          <MetricCard icon={CalendarClock} value={3} label="Today's Follow-ups" sublabel="Due today" variant="soft" />
-          <MetricCard icon={AlarmClock} value={2} label="Missed Follow-ups" sublabel="Action needed" variant="danger" />
-          <MetricCard icon={CheckCheck} value={5} label="Completed Today" sublabel="Today" />
+          <MetricCard icon={ListChecks} value={6} label="Total Follow-ups" sublabel="Open"
+            onClick={() => openFollow("All", "Total Follow-ups")} />
+          <MetricCard icon={CalendarClock} value={3} label="Today's Follow-ups" sublabel="Due today" variant="soft"
+            onClick={() => openFollow("Today", "Today's Follow-ups")} />
+          <MetricCard icon={AlarmClock} value={2} label="Missed Follow-ups" sublabel="Action needed" variant="danger"
+            onClick={() => openFollow("Missed", "Missed Follow-ups")} />
+          <MetricCard icon={CheckCheck} value={5} label="Completed Today" sublabel="Today"
+            onClick={() => openFollow("Completed", "Completed Follow-ups Today")} />
         </div>
       </section>
 
@@ -123,6 +172,34 @@ export default function LeadSummary() {
           <LeadStageBreakdown />
         </div>
       </section>
+
+      {/* Drawers */}
+      <DrillDownDrawer
+        open={clientDrawer.open}
+        onOpenChange={(v) => setClientDrawer((s) => ({ ...s, open: v }))}
+        title={clientDrawer.title}
+        description="Filtered client list"
+      >
+        <ClientsList filter={clientDrawer.filter} />
+      </DrillDownDrawer>
+
+      <DrillDownDrawer
+        open={salesDrawer.open}
+        onOpenChange={(v) => setSalesDrawer((s) => ({ ...s, open: v }))}
+        title={salesDrawer.title}
+        description="Sales breakdown"
+      >
+        <SalesBreakdown filter={salesDrawer.filter} />
+      </DrillDownDrawer>
+
+      <DrillDownDrawer
+        open={followDrawer.open}
+        onOpenChange={(v) => setFollowDrawer((s) => ({ ...s, open: v }))}
+        title={followDrawer.title}
+        description="Follow-up activity"
+      >
+        <FollowUpsList filter={followDrawer.filter} />
+      </DrillDownDrawer>
     </div>
   );
 }
