@@ -52,6 +52,31 @@ export default function AllLeads() {
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; lead: Lead | null; initial?: LeadStatus; title?: string }>({ open: false, lead: null });
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Apply filter from URL (?filter=...) once on mount / when it changes
+  useEffect(() => {
+    const f = searchParams.get("filter");
+    if (!f) return;
+    // reset all
+    setSource("all"); setStatusF("all"); setPotential("all"); setAssigned("all"); setDueToday(false);
+    switch (f) {
+      case "all": break;
+      case "high": setPotential("High"); break;
+      case "low": setPotential("Low"); break;
+      case "follow-up": setStatusF("Follow Up"); break;
+      case "demo-scheduled": setStatusF("Demo Scheduled"); break;
+      case "demo-given": setStatusF("Demo Given"); break;
+      case "converted": setStatusF("Converted"); break;
+      case "lost": setStatusF("Lost"); break;
+    }
+    // clear param so manual filter changes aren't overridden
+    const next = new URLSearchParams(searchParams);
+    next.delete("filter");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get("filter")]);
+
   const toggleExpand = (id: string) =>
     setExpanded((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
