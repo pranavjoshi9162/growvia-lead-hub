@@ -118,6 +118,6 @@
     background: var(--gradient-soft);
   }
   .section-label {
-    @apply text-xs font-semibold uppercase tracking-wider text-primary/80 mb-3;
+    @apply text-xs font-semibold uppercase tracking-wider text-primary/80 mb-2;
   }
 }
