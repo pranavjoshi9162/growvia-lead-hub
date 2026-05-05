@@ -5,7 +5,8 @@ import {
   Users, CreditCard, Hourglass, Flame, AlertTriangle, CalendarX,
   Megaphone, PhoneCall, Monitor, CheckCircle2, XCircle,
   Briefcase, ArrowUpRight, Target, IndianRupee, ListChecks, CalendarClock, AlarmClock, CheckCheck,
-  Store, CircleDot, Gift, CalendarIcon, TrendingUp, TrendingDown
+  Store, CircleDot, Gift, CalendarIcon, TrendingUp, TrendingDown,
+  MapPin, CalendarPlus, CheckCircle, AlertOctagon
 } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SalesFunnel } from "@/components/dashboard/SalesFunnel";
@@ -199,9 +200,9 @@ export default function LeadSummary() {
             onClick={() => goLeads("demo-scheduled")} />
           <MetricCard icon={Monitor} value={7} label="Demo Given" sublabel="This month"
             onClick={() => goLeads("demo-given")} />
-          <MetricCard icon={CheckCircle2} value={6} label="Converted" sublabel="Closed won"
+          <MetricCard icon={CheckCircle2} value={6} label="Sale Done" sublabel="Closed won"
             onClick={() => goLeads("converted")} />
-          <MetricCard icon={XCircle} value={3} label="Lost" sublabel="Closed lost"
+          <MetricCard icon={XCircle} value={3} label="Closed - Dead" sublabel="Closed lost"
             onClick={() => goLeads("lost")} />
         </div>
       </section>
