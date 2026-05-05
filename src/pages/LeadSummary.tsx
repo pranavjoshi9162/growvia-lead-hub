@@ -207,7 +207,27 @@ export default function LeadSummary() {
         </div>
       </section>
 
-      {/* CLIENTS */}
+      {/* VISITS */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Visits</div>
+          <Select defaultValue="today">
+            <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <MetricCard variant="soft" icon={MapPin} value={5} label="Total Visits Today" sublabel="All types" />
+          <MetricCard icon={CalendarPlus} value={3} label="Visits Scheduled Today" sublabel="Planned" />
+          <MetricCard icon={CheckCircle} value={2} label="Visits Completed Today" sublabel="Done" />
+          <MetricCard variant="danger" icon={AlertOctagon} value={1} label="Missed Visits" sublabel="Action needed" />
+        </div>
+      </section>
+
       <section>
         <div className="flex items-center justify-between mb-2">
           <div className="section-label !mb-0">Clients</div>
