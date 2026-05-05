@@ -5,7 +5,8 @@ import {
   Users, CreditCard, Hourglass, Flame, AlertTriangle, CalendarX,
   Megaphone, PhoneCall, Monitor, CheckCircle2, XCircle,
   Briefcase, ArrowUpRight, Target, IndianRupee, ListChecks, CalendarClock, AlarmClock, CheckCheck,
-  Store, CircleDot, Gift, CalendarIcon, TrendingUp, TrendingDown
+  Store, CircleDot, Gift, CalendarIcon, TrendingUp, TrendingDown,
+  MapPin, CalendarPlus, CheckCircle, AlertOctagon
 } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SalesFunnel } from "@/components/dashboard/SalesFunnel";
@@ -195,18 +196,38 @@ export default function LeadSummary() {
 
           <MetricCard icon={PhoneCall} value={9} label="Follow-up Leads" sublabel="Awaiting"
             onClick={() => goLeads("follow-up")} />
-          <MetricCard icon={CalendarClock} value={4} label="Demo Scheduled" sublabel="This week"
+          <MetricCard icon={CalendarClock} value={4} label="Demo Schedule" sublabel="This week"
             onClick={() => goLeads("demo-scheduled")} />
-          <MetricCard icon={Monitor} value={7} label="Demo Given" sublabel="This month"
+          <MetricCard icon={Monitor} value={7} label="Demo Done" sublabel="This month"
             onClick={() => goLeads("demo-given")} />
-          <MetricCard icon={CheckCircle2} value={6} label="Converted" sublabel="Closed won"
+          <MetricCard icon={CheckCircle2} value={6} label="Sale Done" sublabel="Closed won"
             onClick={() => goLeads("converted")} />
-          <MetricCard icon={XCircle} value={3} label="Lost" sublabel="Closed lost"
+          <MetricCard icon={XCircle} value={3} label="Closed - Dead" sublabel="Closed lost"
             onClick={() => goLeads("lost")} />
         </div>
       </section>
 
-      {/* CLIENTS */}
+      {/* VISITS */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Visits</div>
+          <Select defaultValue="today">
+            <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <MetricCard variant="soft" icon={MapPin} value={5} label="Total Visits Today" sublabel="All types" />
+          <MetricCard icon={CalendarPlus} value={3} label="Visits Scheduled Today" sublabel="Planned" />
+          <MetricCard icon={CheckCircle} value={2} label="Visits Completed Today" sublabel="Done" />
+          <MetricCard variant="danger" icon={AlertOctagon} value={1} label="Missed Visits" sublabel="Action needed" />
+        </div>
+      </section>
+
       <section>
         <div className="flex items-center justify-between mb-2">
           <div className="section-label !mb-0">Clients</div>

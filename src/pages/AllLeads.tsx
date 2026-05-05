@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { format, isToday } from "date-fns";
 import {
   Search, Plus, ChevronDown, ChevronRight, MoreHorizontal, Edit, RefreshCcw,
-  CalendarPlus, CheckCircle2, XCircle, Users
+  CalendarPlus, CheckCircle2, XCircle, Users, MapPin
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { useLeads } from "@/context/LeadsContext";
 import { LEAD_STATUSES, LeadStatus, SOURCES, SALES_PEOPLE, Lead } from "@/lib/sampleData";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { StatusUpdateDialog } from "@/components/leads/StatusUpdateDialog";
+import { ScheduleVisitDialog } from "@/components/leads/ScheduleVisitDialog";
 import { LeadTimeline } from "@/components/leads/LeadTimeline";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { DateFilter, DateRange } from "@/components/dashboard/DateFilter";
@@ -24,16 +25,15 @@ import {
 } from "lucide-react";
 
 const statusColor: Record<LeadStatus, string> = {
-  "Pending": "bg-secondary text-muted-foreground border-border",
-  "Contacted": "bg-info-soft text-info border-info/30",
-  "Follow Up": "bg-warning-soft text-warning border-warning/30",
-  "Demo Scheduled": "bg-primary/10 text-primary border-primary/30",
-  "Demo Given": "bg-primary/15 text-primary border-primary/30",
-  "Qualified": "bg-success-soft text-success border-success/30",
-  "Proposal Sent": "bg-info-soft text-info border-info/30",
-  "Trial Started": "bg-warning-soft text-warning border-warning/30",
-  "Converted": "bg-success-soft text-success border-success/30",
-  "Lost": "bg-destructive/10 text-destructive border-destructive/30",
+  "Cold Call": "bg-info-soft text-info border-info/30",
+  "Schedule Visit": "bg-warning-soft text-warning border-warning/30",
+  "Visit Done": "bg-warning-soft text-warning border-warning/30",
+  "Demo Schedule": "bg-primary/10 text-primary border-primary/30",
+  "Demo Done": "bg-primary/15 text-primary border-primary/30",
+  "In-Progress": "bg-warning-soft text-warning border-warning/30",
+  "Free Trial": "bg-success-soft text-success border-success/30",
+  "Sale Done": "bg-success-soft text-success border-success/30",
+  "Closed - Dead": "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 const info = "bg-info-soft text-info border-info/30";
@@ -50,27 +50,25 @@ export default function AllLeads() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; lead: Lead | null; initial?: LeadStatus; title?: string }>({ open: false, lead: null });
+  const [visitDialog, setVisitDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Apply filter from URL (?filter=...) once on mount / when it changes
   useEffect(() => {
     const f = searchParams.get("filter");
     if (!f) return;
-    // reset all
     setSource("all"); setStatusF("all"); setPotential("all"); setAssigned("all"); setDueToday(false);
     switch (f) {
       case "all": break;
       case "high": setPotential("High"); break;
       case "low": setPotential("Low"); break;
-      case "follow-up": setStatusF("Follow Up"); break;
-      case "demo-scheduled": setStatusF("Demo Scheduled"); break;
-      case "demo-given": setStatusF("Demo Given"); break;
-      case "converted": setStatusF("Converted"); break;
-      case "lost": setStatusF("Lost"); break;
+      case "follow-up": setStatusF("Cold Call"); break;
+      case "demo-scheduled": setStatusF("Demo Schedule"); break;
+      case "demo-given": setStatusF("Demo Done"); break;
+      case "converted": setStatusF("Sale Done"); break;
+      case "lost": setStatusF("Closed - Dead"); break;
     }
-    // clear param so manual filter changes aren't overridden
     const next = new URLSearchParams(searchParams);
     next.delete("filter");
     setSearchParams(next, { replace: true });
@@ -96,16 +94,23 @@ export default function AllLeads() {
   const total = leads.length;
   const high = leads.filter((l) => l.potential === "High").length;
   const low = leads.filter((l) => l.potential === "Low").length;
-  const followUp = leads.filter((l) => l.status === "Follow Up").length;
-  const demoSched = leads.filter((l) => l.status === "Demo Scheduled").length;
-  const demoGiven = leads.filter((l) => l.status === "Demo Given").length;
-  const converted = leads.filter((l) => l.status === "Converted").length;
-  const lost = leads.filter((l) => l.status === "Lost").length;
+  const followUp = leads.filter((l) => l.status === "Cold Call").length;
+  const demoSched = leads.filter((l) => l.status === "Demo Schedule").length;
+  const demoGiven = leads.filter((l) => l.status === "Demo Done").length;
+  const converted = leads.filter((l) => l.status === "Sale Done").length;
+  const lost = leads.filter((l) => l.status === "Closed - Dead").length;
 
   const totalFu = leads.filter((l) => l.nextFollowUp).length;
   const todayFu = leads.filter((l) => l.nextFollowUp && isToday(new Date(l.nextFollowUp))).length;
   const missedFu = leads.filter((l) => l.nextFollowUp && new Date(l.nextFollowUp) < new Date(new Date().toDateString())).length;
   const completedFu = 5;
+
+  const nextVisit = (l: Lead) => {
+    const upcoming = (l.visits ?? [])
+      .filter((v) => v.status === "Scheduled" || v.status === "Checked In" || v.status === "Rescheduled")
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+    return upcoming;
+  };
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto">
@@ -126,11 +131,11 @@ export default function AllLeads() {
           <MetricCard variant="soft" icon={Users} value={total} label="Total Leads" sublabel="This month" />
           <MetricCard icon={TrendingUp} value={high} label="High Potential" sublabel="Hot Leads" />
           <MetricCard icon={TrendingDown} value={low} label="Low Potential" sublabel="Cold Leads" />
-          <MetricCard icon={Clock} value={followUp} label="Follow-up Leads" sublabel="Awaiting" />
-          <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Scheduled" sublabel="This month" />
-          <MetricCard icon={Monitor} value={demoGiven} label="Demo Given" sublabel="This month" />
-          <MetricCard icon={Check} value={converted} label="Converted" sublabel="Closed won" />
-          <MetricCard icon={X} value={lost} label="Lost" sublabel="Closed lost" />
+          <MetricCard icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" />
+          <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" />
+          <MetricCard icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" />
+          <MetricCard icon={Check} value={converted} label="Sale Done" sublabel="Closed won" />
+          <MetricCard icon={X} value={lost} label="Closed - Dead" sublabel="Closed lost" />
         </div>
       </section>
 
@@ -158,7 +163,7 @@ export default function AllLeads() {
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={setStatusF}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Statuses" /></SelectTrigger>
+          <SelectTrigger className="w-[170px]"><SelectValue placeholder="All Statuses" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             {LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -198,11 +203,11 @@ export default function AllLeads() {
                 <th className="py-3 pr-4 font-medium">Lead</th>
                 <th className="py-3 pr-4 font-medium">Business</th>
                 <th className="py-3 pr-4 font-medium">Source</th>
-                <th className="py-3 pr-4 font-medium">Potential</th>
                 <th className="py-3 pr-4 font-medium">Status</th>
                 <th className="py-3 pr-4 font-medium">Next Follow-up</th>
+                <th className="py-3 pr-4 font-medium">Next Visit</th>
+                <th className="py-3 pr-4 font-medium">Visit Status</th>
                 <th className="py-3 pr-4 font-medium">Assigned To</th>
-                <th className="py-3 pr-4 font-medium">Created</th>
                 <th className="py-3 pr-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -212,6 +217,7 @@ export default function AllLeads() {
               )}
               {filtered.map((l) => {
                 const isExp = expanded.has(l.id);
+                const v = nextVisit(l);
                 return (
                   <Fragment key={l.id}>
                     <tr key={l.id} className="border-t border-border hover:bg-secondary/30">
@@ -227,44 +233,54 @@ export default function AllLeads() {
                       <td className="py-3 pr-4">{l.business}</td>
                       <td className="py-3 pr-4"><Badge variant="outline" className={info}>{l.source}</Badge></td>
                       <td className="py-3 pr-4">
-                        <Badge variant="outline" className={l.potential === "High"
-                          ? "bg-success-soft text-success border-success/30"
-                          : "bg-secondary text-muted-foreground"}>
-                          {l.potential}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline" className={statusColor[l.status]}>{l.status}</Badge>
+                          {l.substatus && <span className="text-[11px] text-muted-foreground">{l.substatus}</span>}
+                        </div>
                       </td>
-                      <td className="py-3 pr-4"><Badge variant="outline" className={statusColor[l.status]}>{l.status}</Badge></td>
                       <td className="py-3 pr-4 text-muted-foreground">
                         {l.nextFollowUp ? format(new Date(l.nextFollowUp), "dd MMM yyyy") : "—"}
                       </td>
+                      <td className="py-3 pr-4 text-muted-foreground">
+                        {v ? format(new Date(v.date), "dd MMM yyyy") : "—"}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {v ? <Badge variant="outline" className="bg-warning-soft text-warning border-warning/30">{v.status}</Badge> : <span className="text-muted-foreground">—</span>}
+                      </td>
                       <td className="py-3 pr-4">{l.assignedTo}</td>
-                      <td className="py-3 pr-4 text-muted-foreground">{format(new Date(l.createdAt), "dd MMM")}</td>
                       <td className="py-3 pr-4">
                         <div className="flex items-center justify-end gap-1">
                           <Button size="sm" variant="outline" className="h-8"
                             onClick={() => setStatusDialog({ open: true, lead: l, title: "Add Status Update" })}>
                             Status Update
                           </Button>
+                          <Button size="sm" variant="outline" className="h-8 gap-1"
+                            onClick={() => setVisitDialog({ open: true, lead: l })}>
+                            <MapPin className="h-3.5 w-3.5" /> Visit
+                          </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button size="icon" variant="ghost" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 bg-popover">
+                            <DropdownMenuContent align="end" className="w-56 bg-popover">
                               <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, title: "Edit Lead" })}>
                                 <Edit className="h-4 w-4 mr-2" /> Edit Lead
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, title: "Update Status" })}>
                                 <RefreshCcw className="h-4 w-4 mr-2" /> Update Status
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Follow Up", title: "Schedule Follow-up" })}>
+                              <DropdownMenuItem onClick={() => setVisitDialog({ open: true, lead: l })}>
+                                <MapPin className="h-4 w-4 mr-2" /> Schedule Visit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Cold Call", title: "Schedule Follow-up" })}>
                                 <CalendarPlus className="h-4 w-4 mr-2" /> Schedule Follow-up
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Converted", title: "Mark Converted" })}>
-                                <CheckCircle2 className="h-4 w-4 mr-2 text-success" /> Mark Converted
+                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Sale Done", title: "Mark Sale Done" })}>
+                                <CheckCircle2 className="h-4 w-4 mr-2 text-success" /> Mark Sale Done
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Lost", title: "Mark Lost" })}>
-                                <XCircle className="h-4 w-4 mr-2 text-destructive" /> Mark Lost
+                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Closed - Dead", title: "Mark Closed - Dead" })}>
+                                <XCircle className="h-4 w-4 mr-2 text-destructive" /> Mark Closed - Dead
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -278,15 +294,44 @@ export default function AllLeads() {
                             <div className="lg:col-span-2">
                               <LeadTimeline lead={l} />
                             </div>
-                            <div className="rounded-lg border border-border bg-card p-4 h-fit">
-                              <div className="text-sm font-semibold mb-3">Lead Details</div>
-                              <dl className="space-y-2 text-sm">
-                                <Row k="Email" v={l.email} />
-                                <Row k="Phone" v={l.phone} />
-                                <Row k="Source" v={l.source} />
-                                <Row k="Substatus" v={l.substatus ?? "—"} />
-                                <Row k="Notes" v={l.notes ?? "—"} />
-                              </dl>
+                            <div className="space-y-4">
+                              <div className="rounded-lg border border-border bg-card p-4">
+                                <div className="text-sm font-semibold mb-3">Lead Details</div>
+                                <dl className="space-y-2 text-sm">
+                                  <Row k="Email" v={l.email} />
+                                  <Row k="Phone" v={l.phone} />
+                                  <Row k="Source" v={l.source} />
+                                  <Row k="Substatus" v={l.substatus ?? "—"} />
+                                  <Row k="Notes" v={l.notes ?? "—"} />
+                                </dl>
+                              </div>
+                              <div className="rounded-lg border border-border bg-card p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="text-sm font-semibold">Visits</div>
+                                  <Button size="sm" variant="outline" className="h-7 gap-1"
+                                    onClick={() => setVisitDialog({ open: true, lead: l })}>
+                                    <MapPin className="h-3.5 w-3.5" /> Schedule
+                                  </Button>
+                                </div>
+                                {(l.visits ?? []).length === 0 ? (
+                                  <div className="text-xs text-muted-foreground">No visits yet.</div>
+                                ) : (
+                                  <ul className="space-y-2">
+                                    {l.visits!.map((vv) => (
+                                      <li key={vv.id} className="text-xs border border-border rounded-md p-2">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-medium">{vv.type}</span>
+                                          <Badge variant="outline" className="bg-warning-soft text-warning border-warning/30">{vv.status}</Badge>
+                                        </div>
+                                        <div className="text-muted-foreground mt-1">
+                                          {format(new Date(vv.date), "dd MMM yyyy")} · {vv.assignedTo}
+                                        </div>
+                                        {vv.notes && <div className="text-muted-foreground mt-1">{vv.notes}</div>}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -307,6 +352,11 @@ export default function AllLeads() {
         lead={statusDialog.lead}
         initialStatus={statusDialog.initial}
         title={statusDialog.title}
+      />
+      <ScheduleVisitDialog
+        open={visitDialog.open}
+        onOpenChange={(v) => setVisitDialog((s) => ({ ...s, open: v }))}
+        lead={visitDialog.lead}
       />
     </div>
   );

@@ -25,7 +25,7 @@ const initial = {
   businessType: "Restaurant" as BusinessType,
   source: SOURCES[0],
   potential: "High" as Potential,
-  status: "Pending" as LeadStatus,
+  status: "Cold Call" as LeadStatus,
   substatus: "",
   nextFollowUp: "",
   assignedTo: SALES_PEOPLE[0],
@@ -55,7 +55,7 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
   const [form, setForm] = useState(initial);
 
   const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
-  const showDemoFields = form.status === "Demo Scheduled" || form.status === "Demo Given";
+  const showDemoFields = form.status === "Demo Schedule" || form.status === "Demo Done";
 
   const submit = () => {
     if (!form.name.trim() || !form.business.trim()) {
@@ -201,7 +201,7 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
           {/* Demo Fields (conditional) */}
           {showDemoFields && (
             <section className="rounded-xl border border-primary/30 bg-primary/[0.03] p-5">
-              <SectionHeader icon={Monitor} title="Demo Details" subtitle="Required for Demo Scheduled / Demo Given" />
+              <SectionHeader icon={Monitor} title="Demo Details" subtitle="Required for Demo Schedule / Demo Done" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Demo Type</Label>

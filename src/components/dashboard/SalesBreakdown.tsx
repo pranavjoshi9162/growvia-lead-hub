@@ -22,7 +22,7 @@ export function SalesBreakdown({ filter }: Props) {
         <div className="grid grid-cols-3 gap-3">
           <Stat label="Leads" value={totalLeads} />
           <Stat label="Trials" value={10} />
-          <Stat label="Converted" value={6} />
+          <Stat label="Sale Done" value={6} />
           <div className="col-span-3 rounded-lg border border-primary/20 bg-soft-gradient p-4">
             <div className="text-xs text-muted-foreground">Lead → Paid Conversion</div>
             <div className="text-3xl font-bold text-primary mt-1">{conversionRate}%</div>
