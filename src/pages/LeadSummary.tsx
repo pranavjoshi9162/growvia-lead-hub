@@ -19,7 +19,7 @@ import { ClientsList } from "@/components/dashboard/ClientsList";
 import { SalesBreakdown } from "@/components/dashboard/SalesBreakdown";
 import { FollowUpsList } from "@/components/dashboard/FollowUpsList";
 import { ClientStatus } from "@/lib/clientsData";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -46,7 +46,7 @@ const KPI_DATA: Record<RangeTab, { leads: string; sales: string; conv: string; r
 
 export default function LeadSummary() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<RangeTab>("month");
+  
   const [selectedMonth, setSelectedMonth] = useState<string>(MONTHS[new Date().getMonth()]);
   const [selectedYear, setSelectedYear] = useState<string>(String(currentYear));
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
@@ -66,11 +66,6 @@ export default function LeadSummary() {
   const openSales = (filter: SalesFilter, title: string) => setSalesDrawer({ open: true, filter, title });
   const openFollow = (filter: FollowFilter, title: string) => setFollowDrawer({ open: true, filter, title });
 
-  const kpi = KPI_DATA[tab];
-  const leadsLabel = tab === "today" ? "Total Leads Today" : "Total Leads";
-  const salesLabel = tab === "today" ? "Total Sales Today" : "Total Sales";
-  const convLabel = tab === "today" ? "Conversion Today" : "Conversion Rate";
-  const revLabel = tab === "today" ? "Revenue Today" : "Revenue";
 
   return (
     <div className="space-y-8 max-w-[1500px] mx-auto">
@@ -82,64 +77,62 @@ export default function LeadSummary() {
         </div>
       </div>
 
-      {/* Top KPI Tabs */}
-      <Tabs value={tab} onValueChange={(v) => setTab(v as RangeTab)} className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList>
-            <TabsTrigger value="today">Today</TabsTrigger>
-            <TabsTrigger value="month">This Month</TabsTrigger>
-            <TabsTrigger value="year">This Year</TabsTrigger>
-            <TabsTrigger value="all">All</TabsTrigger>
-          </TabsList>
-
-          {tab === "month" && (
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[180px] bg-background"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          )}
-
-          {tab === "year" && (
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[140px] bg-background"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          )}
-
-          {tab === "all" && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-[260px] justify-start text-left font-normal", !customRange && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {customRange?.from ? (
-                    customRange.to ? `${format(customRange.from, "LLL d, y")} - ${format(customRange.to, "LLL d, y")}` : format(customRange.from, "LLL d, y")
-                  ) : "Pick a date range"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar mode="range" selected={customRange} onSelect={setCustomRange} numberOfMonths={2} initialFocus className={cn("p-3 pointer-events-auto")} />
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-
-        <TabsContent value={tab} className="mt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard variant="soft" icon={Megaphone} value={kpi.leads} label={leadsLabel}
-              onClick={() => goLeads("all")} />
-            <MetricCard variant="soft" icon={Briefcase} value={kpi.sales} label={salesLabel}
-              onClick={() => openSales("Closed", "Closed Sales")} />
-            <MetricCard variant="soft" icon={Target} value={kpi.conv} label={convLabel}
-              onClick={() => openSales("Conversion", "Conversion Rate Breakdown")} />
-            <MetricCard variant="soft" icon={IndianRupee} value={kpi.rev} label={revLabel}
-              onClick={() => openSales("MRR", "Revenue Breakdown")} />
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Top KPI grouped sections */}
+      {(["today", "month", "year", "all"] as RangeTab[]).map((rt) => {
+        const k = KPI_DATA[rt];
+        const titles: Record<RangeTab, string> = {
+          today: "Today", month: "This Month", year: "This Year", all: "All Time",
+        };
+        const suffix = rt === "today" ? " (Today)" : "";
+        return (
+          <section key={rt}>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <h2 className="text-lg font-semibold">{titles[rt]}</h2>
+              {rt === "month" && (
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-[180px] bg-background"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+              {rt === "year" && (
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-[140px] bg-background"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+              {rt === "all" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-[260px] justify-start text-left font-normal", !customRange && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customRange?.from ? (
+                        customRange.to ? `${format(customRange.from, "LLL d, y")} - ${format(customRange.to, "LLL d, y")}` : format(customRange.from, "LLL d, y")
+                      ) : "Pick a date range"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar mode="range" selected={customRange} onSelect={setCustomRange} numberOfMonths={2} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <MetricCard variant="soft" icon={Megaphone} value={k.leads} label={`Total Leads${suffix}`}
+                onClick={() => goLeads("all")} />
+              <MetricCard variant="soft" icon={Briefcase} value={k.sales} label={`Total Sales${suffix}`}
+                onClick={() => openSales("Closed", "Closed Sales")} />
+              <MetricCard variant="soft" icon={Target} value={k.conv} label={`Conversion Rate${suffix}`}
+                onClick={() => openSales("Conversion", "Conversion Rate Breakdown")} />
+              <MetricCard variant="soft" icon={IndianRupee} value={k.rev} label={`Revenue${suffix}`}
+                onClick={() => openSales("MRR", "Revenue Breakdown")} />
+            </div>
+          </section>
+        );
+      })}
 
       {/* LEADS (moved to top) */}
       <section>
