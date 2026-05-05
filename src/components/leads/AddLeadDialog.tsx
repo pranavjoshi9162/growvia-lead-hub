@@ -201,7 +201,7 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
           {/* Demo Fields (conditional) */}
           {showDemoFields && (
             <section className="rounded-xl border border-primary/30 bg-primary/[0.03] p-5">
-              <SectionHeader icon={Monitor} title="Demo Details" subtitle="Required for Demo Scheduled / Demo Given" />
+              <SectionHeader icon={Monitor} title="Demo Details" subtitle="Required for Demo Schedule / Demo Done" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Demo Type</Label>

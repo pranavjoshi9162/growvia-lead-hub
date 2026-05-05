@@ -196,9 +196,9 @@ export default function LeadSummary() {
 
           <MetricCard icon={PhoneCall} value={9} label="Follow-up Leads" sublabel="Awaiting"
             onClick={() => goLeads("follow-up")} />
-          <MetricCard icon={CalendarClock} value={4} label="Demo Scheduled" sublabel="This week"
+          <MetricCard icon={CalendarClock} value={4} label="Demo Schedule" sublabel="This week"
             onClick={() => goLeads("demo-scheduled")} />
-          <MetricCard icon={Monitor} value={7} label="Demo Given" sublabel="This month"
+          <MetricCard icon={Monitor} value={7} label="Demo Done" sublabel="This month"
             onClick={() => goLeads("demo-given")} />
           <MetricCard icon={CheckCircle2} value={6} label="Sale Done" sublabel="Closed won"
             onClick={() => goLeads("converted")} />
