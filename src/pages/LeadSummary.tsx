@@ -208,8 +208,19 @@ export default function LeadSummary() {
 
       {/* CLIENTS */}
       <section>
-        <div className="section-label">Clients</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Clients</div>
+          <Select defaultValue="this-month">
+            <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="this-year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <MetricCard variant="soft" icon={Users} value={18} label="Total Clients" sublabel="This month"
             onClick={() => openClients("All", "Total Clients")} />
           <MetricCard variant="soft" icon={CreditCard} value={11} label="Paid Clients" sublabel="This month"
@@ -228,7 +239,7 @@ export default function LeadSummary() {
       {/* PRODUCT METRICS */}
       <section>
         <div className="section-label">Product Metrics</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <MetricCard variant="soft" icon={Store} value={42} label="Total Outlets" sublabel="Across all clients" />
           <MetricCard variant="soft" icon={CircleDot} value={28} label="Total Wheels" sublabel="Active campaigns" />
           <MetricCard variant="soft" icon={Gift} value="3.2K" label="Total Loyalty Cards" sublabel="Issued" />
@@ -237,8 +248,19 @@ export default function LeadSummary() {
 
       {/* SALES */}
       <section>
-        <div className="section-label">Sales</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Sales</div>
+          <Select defaultValue="this-month">
+            <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="this-year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <MetricCard variant="soft" icon={Briefcase} value={3} label="Closed Sales" sublabel="This month"
             onClick={() => openSales("Closed", "Closed Sales")} />
           <MetricCard variant="soft" icon={ArrowUpRight} value={6} label="Trial → Paid" sublabel="This month"
@@ -252,8 +274,19 @@ export default function LeadSummary() {
 
       {/* FOLLOW-UPS */}
       <section>
-        <div className="section-label">Follow-ups</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Follow-ups</div>
+          <Select defaultValue="this-month">
+            <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="this-year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <MetricCard icon={ListChecks} value={6} label="Total Follow-ups" sublabel="Open"
             onClick={() => openFollow("All", "Total Follow-ups")} />
           <MetricCard icon={CalendarClock} value={3} label="Today's Follow-ups" sublabel="Due today" variant="soft"
