@@ -66,11 +66,6 @@ export default function LeadSummary() {
   const openSales = (filter: SalesFilter, title: string) => setSalesDrawer({ open: true, filter, title });
   const openFollow = (filter: FollowFilter, title: string) => setFollowDrawer({ open: true, filter, title });
 
-  const kpi = KPI_DATA[tab];
-  const leadsLabel = tab === "today" ? "Total Leads Today" : "Total Leads";
-  const salesLabel = tab === "today" ? "Total Sales Today" : "Total Sales";
-  const convLabel = tab === "today" ? "Conversion Today" : "Conversion Rate";
-  const revLabel = tab === "today" ? "Revenue Today" : "Revenue";
 
   return (
     <div className="space-y-8 max-w-[1500px] mx-auto">
