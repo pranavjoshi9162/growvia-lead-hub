@@ -68,16 +68,17 @@ export default function LeadSummary() {
 
 
   return (
-    <div className="space-y-8 max-w-[1500px] mx-auto">
+    <div className="space-y-5 max-w-[1500px] mx-auto">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-primary">Sales & Lead Overview</div>
-          <h1 className="text-3xl font-bold mt-1">Main Dashboard</h1>
+          <h1 className="text-2xl font-bold mt-1">Main Dashboard</h1>
         </div>
       </div>
 
-      {/* Top KPI grouped sections */}
+      {/* Top KPI grouped sections (compact) */}
+      <div className="space-y-4">
       {(["today", "month", "year", "all"] as RangeTab[]).map((rt) => {
         const k = KPI_DATA[rt];
         const titles: Record<RangeTab, string> = {
@@ -86,11 +87,11 @@ export default function LeadSummary() {
         const suffix = rt === "today" ? " (Today)" : "";
         return (
           <section key={rt}>
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-              <h2 className="text-lg font-semibold">{titles[rt]}</h2>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <h2 className="text-sm font-semibold text-foreground">{titles[rt]}</h2>
               {rt === "month" && (
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="w-[180px] bg-background"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {MONTHS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
@@ -98,7 +99,7 @@ export default function LeadSummary() {
               )}
               {rt === "year" && (
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-[140px] bg-background"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-7 w-[110px] bg-background text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                   </SelectContent>
@@ -107,20 +108,20 @@ export default function LeadSummary() {
               {rt === "all" && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-[260px] justify-start text-left font-normal", !customRange && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                    <Button variant="outline" size="sm" className={cn("h-7 w-[230px] justify-start text-left font-normal text-xs", !customRange && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                       {customRange?.from ? (
                         customRange.to ? `${format(customRange.from, "LLL d, y")} - ${format(customRange.to, "LLL d, y")}` : format(customRange.from, "LLL d, y")
                       ) : "Pick a date range"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar mode="range" selected={customRange} onSelect={setCustomRange} numberOfMonths={2} initialFocus className={cn("p-3 pointer-events-auto")} />
                   </PopoverContent>
                 </Popover>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <MetricCard variant="soft" icon={Megaphone} value={k.leads} label={`Total Leads${suffix}`}
                 onClick={() => goLeads("all")} />
               <MetricCard variant="soft" icon={Briefcase} value={k.sales} label={`Total Sales${suffix}`}
@@ -133,11 +134,23 @@ export default function LeadSummary() {
           </section>
         );
       })}
+      </div>
 
       {/* LEADS (moved to top) */}
       <section>
-        <div className="section-label">Leads</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Leads</div>
+          <Select defaultValue="this-month">
+            <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="this-year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Total Leads with hot/cold breakdown */}
           <button
             type="button"
