@@ -19,7 +19,7 @@ import { ClientsList } from "@/components/dashboard/ClientsList";
 import { SalesBreakdown } from "@/components/dashboard/SalesBreakdown";
 import { FollowUpsList } from "@/components/dashboard/FollowUpsList";
 import { ClientStatus } from "@/lib/clientsData";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -46,7 +46,7 @@ const KPI_DATA: Record<RangeTab, { leads: string; sales: string; conv: string; r
 
 export default function LeadSummary() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<RangeTab>("month");
+  
   const [selectedMonth, setSelectedMonth] = useState<string>(MONTHS[new Date().getMonth()]);
   const [selectedYear, setSelectedYear] = useState<string>(String(currentYear));
   const [customRange, setCustomRange] = useState<DateRange | undefined>();
