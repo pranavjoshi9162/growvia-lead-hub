@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry } from "@/lib/sampleData";
+import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry, Visit, VisitStatus } from "@/lib/sampleData";
 
 interface LeadsCtx {
   leads: Lead[];
@@ -7,6 +7,8 @@ interface LeadsCtx {
   updateLead: (id: string, patch: Partial<Lead>) => void;
   appendTimeline: (id: string, entry: Omit<TimelineEntry, "id" | "timestamp">) => void;
   setStatus: (id: string, status: LeadStatus, substatus?: string, notes?: string, followUpDate?: string) => void;
+  scheduleVisit: (id: string, visit: Omit<Visit, "id">) => void;
+  updateVisitStatus: (leadId: string, visitId: string, status: VisitStatus, notes?: string) => void;
 }
 
 const Ctx = createContext<LeadsCtx | null>(null);
@@ -21,7 +23,7 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
       ...l,
       id,
       createdAt: created,
-      timeline: [{ id: "t1", status: l.status, substatus: l.substatus, notes: l.notes, followUpDate: l.nextFollowUp, timestamp: created }],
+      timeline: [{ id: "t1", kind: "status", status: l.status, substatus: l.substatus, notes: l.notes, followUpDate: l.nextFollowUp, timestamp: created }],
     };
     setLeads((prev) => [newLead, ...prev]);
   };
@@ -54,14 +56,71 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
           nextFollowUp: followUpDate ?? l.nextFollowUp,
           timeline: [
             ...l.timeline,
-            { id: `t${l.timeline.length + 1}`, status, substatus, notes, followUpDate, timestamp: new Date().toISOString() },
+            { id: `t${l.timeline.length + 1}`, kind: "status", status, substatus, notes, followUpDate, timestamp: new Date().toISOString() },
           ],
         };
       })
     );
   };
 
-  return <Ctx.Provider value={{ leads, addLead, updateLead, appendTimeline, setStatus }}>{children}</Ctx.Provider>;
+  const scheduleVisit: LeadsCtx["scheduleVisit"] = (id, visit) => {
+    setLeads((prev) =>
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        const vid = `v${(l.visits?.length ?? 0) + 1}`;
+        const newVisit: Visit = { ...visit, id: vid };
+        return {
+          ...l,
+          visits: [...(l.visits ?? []), newVisit],
+          timeline: [
+            ...l.timeline,
+            {
+              id: `t${l.timeline.length + 1}`,
+              kind: "visit",
+              visitType: visit.type,
+              visitStatus: visit.status,
+              assignedTo: visit.assignedTo,
+              notes: visit.notes,
+              followUpDate: visit.date,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        };
+      })
+    );
+  };
+
+  const updateVisitStatus: LeadsCtx["updateVisitStatus"] = (leadId, visitId, status, notes) => {
+    setLeads((prev) =>
+      prev.map((l) => {
+        if (l.id !== leadId) return l;
+        const visits = (l.visits ?? []).map((v) => (v.id === visitId ? { ...v, status, notes: notes ?? v.notes } : v));
+        const v = visits.find((x) => x.id === visitId);
+        return {
+          ...l,
+          visits,
+          timeline: [
+            ...l.timeline,
+            {
+              id: `t${l.timeline.length + 1}`,
+              kind: "visit",
+              visitType: v?.type,
+              visitStatus: status,
+              assignedTo: v?.assignedTo,
+              notes,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        };
+      })
+    );
+  };
+
+  return (
+    <Ctx.Provider value={{ leads, addLead, updateLead, appendTimeline, setStatus, scheduleVisit, updateVisitStatus }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useLeads() {
