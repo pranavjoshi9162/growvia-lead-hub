@@ -1,6 +1,6 @@
 import { useMemo, useState, Fragment, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { format, isToday } from "date-fns";
+import { format, isToday, isPast, isFuture } from "date-fns";
 import {
   Search, Plus, ChevronDown, ChevronRight, MoreHorizontal, Edit, RefreshCcw,
   CalendarPlus, CheckCircle2, XCircle, Users, MapPin
@@ -46,6 +46,7 @@ export default function AllLeads() {
   const [potential, setPotential] = useState("all");
   const [assigned, setAssigned] = useState("all");
   const [dueToday, setDueToday] = useState(false);
+  const [visitFilter, setVisitFilter] = useState<"all" | "today" | "upcoming" | "missed" | "completed">("all");
   const [range, setRange] = useState<DateRange>("month");
 
   const [addOpen, setAddOpen] = useState(false);
@@ -86,9 +87,21 @@ export default function AllLeads() {
       if (potential !== "all" && l.potential !== potential) return false;
       if (assigned !== "all" && l.assignedTo !== assigned) return false;
       if (dueToday && (!l.nextFollowUp || !isToday(new Date(l.nextFollowUp)))) return false;
+      if (visitFilter !== "all") {
+        const visits = l.visits ?? [];
+        const match = visits.some((v) => {
+          const dt = new Date(v.date);
+          if (visitFilter === "today") return isToday(dt) && (v.status === "Scheduled" || v.status === "Checked In");
+          if (visitFilter === "upcoming") return isFuture(dt) && v.status === "Scheduled";
+          if (visitFilter === "missed") return v.status === "Missed" || (isPast(dt) && !isToday(dt) && v.status === "Scheduled");
+          if (visitFilter === "completed") return v.status === "Completed";
+          return true;
+        });
+        if (!match) return false;
+      }
       return true;
     });
-  }, [leads, search, source, status, potential, assigned, dueToday]);
+  }, [leads, search, source, status, potential, assigned, dueToday, visitFilter]);
 
   // overview counts
   const total = leads.length;
@@ -104,6 +117,13 @@ export default function AllLeads() {
   const todayFu = leads.filter((l) => l.nextFollowUp && isToday(new Date(l.nextFollowUp))).length;
   const missedFu = leads.filter((l) => l.nextFollowUp && new Date(l.nextFollowUp) < new Date(new Date().toDateString())).length;
   const completedFu = 5;
+
+  // Visit metrics
+  const allVisits = leads.flatMap((l) => (l.visits ?? []).map((v) => ({ v, lead: l })));
+  const visitsToday = allVisits.filter(({ v }) => isToday(new Date(v.date)));
+  const scheduledToday = visitsToday.filter(({ v }) => v.status === "Scheduled" || v.status === "Checked In").length;
+  const completedToday = visitsToday.filter(({ v }) => v.status === "Completed").length;
+  const missedVisits = allVisits.filter(({ v }) => v.status === "Missed" || (isPast(new Date(v.date)) && !isToday(new Date(v.date)) && v.status === "Scheduled")).length;
 
   const nextVisit = (l: Lead) => {
     const upcoming = (l.visits ?? [])
@@ -149,6 +169,17 @@ export default function AllLeads() {
         </div>
       </section>
 
+      {/* Visits Summary */}
+      <section>
+        <div className="section-label">Visits</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard variant="soft" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" />
+          <MetricCard icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" />
+          <MetricCard icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" />
+          <MetricCard variant="danger" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" />
+        </div>
+      </section>
+
       {/* Filters */}
       <div className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[220px]">
@@ -191,6 +222,30 @@ export default function AllLeads() {
         <Button onClick={() => setAddOpen(true)} className="ml-auto gap-2">
           <Plus className="h-4 w-4" /> Add Manual Lead
         </Button>
+      </div>
+
+      {/* Visit filter chips */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground mr-1">Visits:</span>
+        {([
+          { k: "all", label: "All" },
+          { k: "today", label: "Today's Visits" },
+          { k: "upcoming", label: "Upcoming" },
+          { k: "missed", label: "Missed" },
+          { k: "completed", label: "Completed" },
+        ] as const).map((c) => (
+          <button
+            key={c.k}
+            onClick={() => setVisitFilter(c.k)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition ${
+              visitFilter === c.k
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-foreground border-border hover:bg-secondary"
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
       </div>
 
       {/* Table */}
@@ -242,10 +297,20 @@ export default function AllLeads() {
                         {l.nextFollowUp ? format(new Date(l.nextFollowUp), "dd MMM yyyy") : "—"}
                       </td>
                       <td className="py-3 pr-4 text-muted-foreground">
-                        {v ? format(new Date(v.date), "dd MMM yyyy") : "—"}
+                        {v ? (isToday(new Date(v.date)) ? <span className="text-warning font-medium">Today · {format(new Date(v.date), "dd MMM")}</span> : format(new Date(v.date), "dd MMM yyyy")) : "—"}
                       </td>
                       <td className="py-3 pr-4">
-                        {v ? <Badge variant="outline" className="bg-warning-soft text-warning border-warning/30">{v.status}</Badge> : <span className="text-muted-foreground">—</span>}
+                        {v ? (
+                          <Badge variant="outline" className={
+                            isToday(new Date(v.date))
+                              ? "bg-warning-soft text-warning border-warning/30"
+                              : v.status === "Completed" ? "bg-success-soft text-success border-success/30"
+                              : v.status === "Missed" ? "bg-destructive/10 text-destructive border-destructive/30"
+                              : "bg-info-soft text-info border-info/30"
+                          }>
+                            {isToday(new Date(v.date)) && v.status === "Scheduled" ? "Today" : v.status}
+                          </Badge>
+                        ) : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="py-3 pr-4">{l.assignedTo}</td>
                       <td className="py-3 pr-4">
