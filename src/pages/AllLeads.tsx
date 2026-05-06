@@ -260,7 +260,8 @@ export default function AllLeads() {
           <Checkbox checked={dueToday} onCheckedChange={(v) => setDueToday(!!v)} />
           Due Today
         </label>
-        <Button onClick={() => setAddOpen(true)} className="ml-auto gap-2">
+        <Button variant="outline" onClick={clearAll} className="gap-2 ml-auto">Clear Filters</Button>
+        <Button onClick={() => setAddOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Add Manual Lead
         </Button>
       </div>
