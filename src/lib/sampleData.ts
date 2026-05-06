@@ -109,10 +109,10 @@ export interface TimelineEntry {
   assignedTo?: string;
 }
 
-export type BusinessType = "Restaurant" | "Salon" | "Other";
+export type BusinessType = "Restaurant" | "Salon" | "Bar" | "Cafe" | "Gym" | "Other";
 export type DemoType = "Onsite" | "Online" | "Phone";
 
-export const BUSINESS_TYPES: BusinessType[] = ["Restaurant", "Salon", "Other"];
+export const BUSINESS_TYPES: BusinessType[] = ["Restaurant", "Salon", "Bar", "Cafe", "Gym", "Other"];
 export const DEMO_TYPES: DemoType[] = ["Onsite", "Online", "Phone"];
 
 export interface Lead {
