@@ -112,9 +112,32 @@ export default function AllLeads() {
         });
         if (!match) return false;
       }
+      if (cardFilter) {
+        const visits = l.visits ?? [];
+        const today0 = new Date(new Date().toDateString());
+        const fuDate = l.nextFollowUp ? new Date(l.nextFollowUp) : null;
+        switch (cardFilter) {
+          case "total": break;
+          case "high": if (l.potential !== "High") return false; break;
+          case "low": if (l.potential !== "Low") return false; break;
+          case "cold": if (l.status !== "Cold Call") return false; break;
+          case "demo-sched": if (l.status !== "Demo Schedule") return false; break;
+          case "demo-done": if (l.status !== "Demo Done") return false; break;
+          case "sale-done": if (l.status !== "Sale Done") return false; break;
+          case "lost": if (l.status !== "Closed - Dead") return false; break;
+          case "fu-total": if (!fuDate) return false; break;
+          case "fu-today": if (!fuDate || !isToday(fuDate)) return false; break;
+          case "fu-missed": if (!fuDate || fuDate >= today0) return false; break;
+          case "fu-completed": return false; // no completion tracking yet
+          case "v-today": if (!visits.some((v) => isToday(new Date(v.date)))) return false; break;
+          case "v-scheduled-today": if (!visits.some((v) => isToday(new Date(v.date)) && v.status === "Scheduled")) return false; break;
+          case "v-completed-today": if (!visits.some((v) => isToday(new Date(v.date)) && v.status === "Completed")) return false; break;
+          case "v-missed": if (!visits.some((v) => v.status === "Missed" || (isPast(new Date(v.date)) && !isToday(new Date(v.date)) && v.status === "Scheduled"))) return false; break;
+        }
+      }
       return true;
     });
-  }, [leads, search, source, status, potential, assigned, dueToday, visitFilter]);
+  }, [leads, search, source, status, potential, assigned, dueToday, visitFilter, cardFilter]);
 
   // overview counts
   const total = leads.length;
