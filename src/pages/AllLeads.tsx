@@ -189,9 +189,40 @@ export default function AllLeads() {
           )}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard variant="soft" icon={Users} value={total} label="Total Leads" sublabel="This month" onClick={() => toggleCard("total")} active={cardFilter === "total"} />
-          <MetricCard icon={TrendingUp} value={high} label="High Potential" sublabel="Hot Leads" onClick={() => toggleCard("high")} active={cardFilter === "high"} />
-          <MetricCard icon={TrendingDown} value={low} label="Low Potential" sublabel="Cold Leads" onClick={() => toggleCard("low")} active={cardFilter === "low"} />
+          <button
+            type="button"
+            onClick={() => toggleCard("total")}
+            className={`w-full text-left rounded-xl border p-4 transition-all hover:shadow-[var(--shadow-card)] cursor-pointer hover:-translate-y-0.5 hover:border-primary/40 active:translate-y-0 border-primary/20 bg-soft-gradient ${cardFilter === "total" ? "ring-2 ring-primary border-primary shadow-[var(--shadow-card)]" : ""}`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-2xl font-bold tracking-tight text-foreground">{total}</div>
+                <div className="text-sm font-medium text-foreground mt-1 truncate">Total Leads</div>
+              </div>
+              <div className="h-8 w-8 rounded-lg grid place-items-center shrink-0 bg-primary/10 text-primary">
+                <Users className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-primary/15 flex items-center gap-4">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); toggleCard("high"); }}
+                className={`flex items-baseline gap-1.5 text-xs hover:underline ${cardFilter === "high" ? "text-primary font-semibold" : "text-muted-foreground"}`}
+              >
+                <span className="text-sm font-semibold text-foreground">{high}</span>
+                <span>Hot Leads</span>
+              </button>
+              <span className="h-3 w-px bg-border" />
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); toggleCard("low"); }}
+                className={`flex items-baseline gap-1.5 text-xs hover:underline ${cardFilter === "low" ? "text-primary font-semibold" : "text-muted-foreground"}`}
+              >
+                <span className="text-sm font-semibold text-foreground">{low}</span>
+                <span>Cold Leads</span>
+              </button>
+            </div>
+          </button>
           <MetricCard icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" onClick={() => toggleCard("cold")} active={cardFilter === "cold"} />
           <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" onClick={() => toggleCard("demo-sched")} active={cardFilter === "demo-sched"} />
           <MetricCard icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" onClick={() => toggleCard("demo-done")} active={cardFilter === "demo-done"} />
@@ -327,7 +358,14 @@ export default function AllLeads() {
                         <div className="font-medium">{l.name}</div>
                         <div className="text-xs text-muted-foreground">{l.phone}</div>
                       </td>
-                      <td className="py-3 pr-4">{l.business}</td>
+                      <td className="py-3 pr-4">
+                        <div className="font-semibold text-foreground leading-tight">{l.business}</div>
+                        {(l.businessType || l.outletAddress) && (
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {[l.businessType, l.outletAddress].filter(Boolean).join(" – ")}
+                          </div>
+                        )}
+                      </td>
                       <td className="py-3 pr-4"><Badge variant="outline" className={info}>{l.source}</Badge></td>
                       <td className="py-3 pr-4">
                         <div className="flex flex-col gap-1">

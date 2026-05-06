@@ -109,10 +109,10 @@ export interface TimelineEntry {
   assignedTo?: string;
 }
 
-export type BusinessType = "Restaurant" | "Salon" | "Other";
+export type BusinessType = "Restaurant" | "Salon" | "Bar" | "Cafe" | "Gym" | "Other";
 export type DemoType = "Onsite" | "Online" | "Phone";
 
-export const BUSINESS_TYPES: BusinessType[] = ["Restaurant", "Salon", "Other"];
+export const BUSINESS_TYPES: BusinessType[] = ["Restaurant", "Salon", "Bar", "Cafe", "Gym", "Other"];
 export const DEMO_TYPES: DemoType[] = ["Onsite", "Online", "Phone"];
 
 export interface Lead {
@@ -158,6 +158,8 @@ export const SAMPLE_LEADS: Lead[] = [
     id: "L-1001",
     name: "Rahul Verma",
     business: "Tulsi Restaurant",
+    businessType: "Restaurant",
+    outletAddress: "Adajan, Surat",
     phone: "+91 98200 12345",
     email: "rahul@tulsirestaurant.in",
     source: "Website",
@@ -182,6 +184,8 @@ export const SAMPLE_LEADS: Lead[] = [
     id: "L-1002",
     name: "Meera Iyer",
     business: "Cafe Amara",
+    businessType: "Cafe",
+    outletAddress: "Vesu, Surat",
     phone: "+91 90040 55667",
     email: "hello@cafeamara.in",
     source: "Referral",
@@ -206,6 +210,8 @@ export const SAMPLE_LEADS: Lead[] = [
     id: "L-1003",
     name: "Arjun Kapoor",
     business: "Urban Thali",
+    businessType: "Restaurant",
+    outletAddress: "Bandra, Mumbai",
     phone: "+91 99876 11221",
     email: "arjun@urbanthali.com",
     source: "WhatsApp Campaign",
@@ -224,6 +230,8 @@ export const SAMPLE_LEADS: Lead[] = [
     id: "L-1004",
     name: "Sneha Reddy",
     business: "Spice Route",
+    businessType: "Restaurant",
+    outletAddress: "Indiranagar, Bengaluru",
     phone: "+91 97000 88991",
     email: "sneha@spiceroute.in",
     source: "Instagram",
@@ -243,6 +251,8 @@ export const SAMPLE_LEADS: Lead[] = [
     id: "L-1005",
     name: "Karan Singh",
     business: "Biryani House",
+    businessType: "Restaurant",
+    outletAddress: "Charminar, Hyderabad",
     phone: "+91 98989 77665",
     email: "karan@biryanihouse.in",
     source: "Google Ads",
@@ -265,6 +275,8 @@ export const SAMPLE_LEADS: Lead[] = [
     id: "L-1006",
     name: "Divya Nair",
     business: "Coastal Kitchen",
+    businessType: "Cafe",
+    outletAddress: "Panjim, Goa",
     phone: "+91 90909 22113",
     email: "divya@coastalkitchen.in",
     source: "Walk-in",
@@ -282,6 +294,8 @@ export const SAMPLE_LEADS: Lead[] = [
     id: "L-1007",
     name: "Vikram Joshi",
     business: "The Curry Leaf",
+    businessType: "Restaurant",
+    outletAddress: "Andheri, Mumbai",
     phone: "+91 99887 66554",
     email: "vikram@curryleaf.in",
     source: "Referral",
@@ -301,6 +315,8 @@ export const SAMPLE_LEADS: Lead[] = [
     id: "L-1008",
     name: "Anita Desai",
     business: "Green Bowl",
+    businessType: "Cafe",
+    outletAddress: "Koregaon Park, Pune",
     phone: "+91 98123 45678",
     email: "anita@greenbowl.in",
     source: "Website",
