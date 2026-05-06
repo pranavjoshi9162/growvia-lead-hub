@@ -358,7 +358,14 @@ export default function AllLeads() {
                         <div className="font-medium">{l.name}</div>
                         <div className="text-xs text-muted-foreground">{l.phone}</div>
                       </td>
-                      <td className="py-3 pr-4">{l.business}</td>
+                      <td className="py-3 pr-4">
+                        <div className="font-semibold text-foreground leading-tight">{l.business}</div>
+                        {(l.businessType || l.outletAddress) && (
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {[l.businessType, l.outletAddress].filter(Boolean).join(" – ")}
+                          </div>
+                        )}
+                      </td>
                       <td className="py-3 pr-4"><Badge variant="outline" className={info}>{l.source}</Badge></td>
                       <td className="py-3 pr-4">
                         <div className="flex flex-col gap-1">
