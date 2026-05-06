@@ -118,6 +118,13 @@ export default function AllLeads() {
   const missedFu = leads.filter((l) => l.nextFollowUp && new Date(l.nextFollowUp) < new Date(new Date().toDateString())).length;
   const completedFu = 5;
 
+  // Visit metrics
+  const allVisits = leads.flatMap((l) => (l.visits ?? []).map((v) => ({ v, lead: l })));
+  const visitsToday = allVisits.filter(({ v }) => isToday(new Date(v.date)));
+  const scheduledToday = visitsToday.filter(({ v }) => v.status === "Scheduled" || v.status === "Checked In").length;
+  const completedToday = visitsToday.filter(({ v }) => v.status === "Completed").length;
+  const missedVisits = allVisits.filter(({ v }) => v.status === "Missed" || (isPast(new Date(v.date)) && !isToday(new Date(v.date)) && v.status === "Scheduled")).length;
+
   const nextVisit = (l: Lead) => {
     const upcoming = (l.visits ?? [])
       .filter((v) => v.status === "Scheduled" || v.status === "Checked In" || v.status === "Rescheduled")
