@@ -224,6 +224,30 @@ export default function AllLeads() {
         </Button>
       </div>
 
+      {/* Visit filter chips */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground mr-1">Visits:</span>
+        {([
+          { k: "all", label: "All" },
+          { k: "today", label: "Today's Visits" },
+          { k: "upcoming", label: "Upcoming" },
+          { k: "missed", label: "Missed" },
+          { k: "completed", label: "Completed" },
+        ] as const).map((c) => (
+          <button
+            key={c.k}
+            onClick={() => setVisitFilter(c.k)}
+            className={`text-xs px-3 py-1.5 rounded-full border transition ${
+              visitFilter === c.k
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-foreground border-border hover:bg-secondary"
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
       {/* Table */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
