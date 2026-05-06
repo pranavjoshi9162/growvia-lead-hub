@@ -47,7 +47,20 @@ export default function AllLeads() {
   const [assigned, setAssigned] = useState("all");
   const [dueToday, setDueToday] = useState(false);
   const [visitFilter, setVisitFilter] = useState<"all" | "today" | "upcoming" | "missed" | "completed">("all");
+  type CardKey =
+    | null
+    | "total" | "high" | "low"
+    | "cold" | "demo-sched" | "demo-done" | "sale-done" | "lost"
+    | "fu-total" | "fu-today" | "fu-missed" | "fu-completed"
+    | "v-today" | "v-scheduled-today" | "v-completed-today" | "v-missed";
+  const [cardFilter, setCardFilter] = useState<CardKey>(null);
   const [range, setRange] = useState<DateRange>("month");
+
+  const toggleCard = (k: CardKey) => setCardFilter((c) => (c === k ? null : k));
+  const clearAll = () => {
+    setSearch(""); setSource("all"); setStatusF("all"); setPotential("all");
+    setAssigned("all"); setDueToday(false); setVisitFilter("all"); setCardFilter(null);
+  };
 
   const [addOpen, setAddOpen] = useState(false);
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; lead: Lead | null; initial?: LeadStatus; title?: string }>({ open: false, lead: null });
