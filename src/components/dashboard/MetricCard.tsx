@@ -9,6 +9,7 @@ interface MetricCardProps {
   variant?: "default" | "soft" | "danger" | "warning";
   className?: string;
   onClick?: () => void;
+  active?: boolean;
 }
 
 export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick }: MetricCardProps) {
