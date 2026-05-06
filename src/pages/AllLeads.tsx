@@ -46,6 +46,7 @@ export default function AllLeads() {
   const [potential, setPotential] = useState("all");
   const [assigned, setAssigned] = useState("all");
   const [dueToday, setDueToday] = useState(false);
+  const [visitFilter, setVisitFilter] = useState<"all" | "today" | "upcoming" | "missed" | "completed">("all");
   const [range, setRange] = useState<DateRange>("month");
 
   const [addOpen, setAddOpen] = useState(false);
