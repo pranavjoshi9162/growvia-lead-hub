@@ -182,26 +182,31 @@ export default function AllLeads() {
 
       {/* Overview cards */}
       <section>
-        <div className="section-label">Leads Overview</div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Leads Overview</div>
+          {cardFilter && (
+            <button onClick={() => setCardFilter(null)} className="text-xs text-primary hover:underline">Clear card filter</button>
+          )}
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard variant="soft" icon={Users} value={total} label="Total Leads" sublabel="This month" />
-          <MetricCard icon={TrendingUp} value={high} label="High Potential" sublabel="Hot Leads" />
-          <MetricCard icon={TrendingDown} value={low} label="Low Potential" sublabel="Cold Leads" />
-          <MetricCard icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" />
-          <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" />
-          <MetricCard icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" />
-          <MetricCard icon={Check} value={converted} label="Sale Done" sublabel="Closed won" />
-          <MetricCard icon={X} value={lost} label="Closed - Dead" sublabel="Closed lost" />
+          <MetricCard variant="soft" icon={Users} value={total} label="Total Leads" sublabel="This month" onClick={() => toggleCard("total")} active={cardFilter === "total"} />
+          <MetricCard icon={TrendingUp} value={high} label="High Potential" sublabel="Hot Leads" onClick={() => toggleCard("high")} active={cardFilter === "high"} />
+          <MetricCard icon={TrendingDown} value={low} label="Low Potential" sublabel="Cold Leads" onClick={() => toggleCard("low")} active={cardFilter === "low"} />
+          <MetricCard icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" onClick={() => toggleCard("cold")} active={cardFilter === "cold"} />
+          <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" onClick={() => toggleCard("demo-sched")} active={cardFilter === "demo-sched"} />
+          <MetricCard icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" onClick={() => toggleCard("demo-done")} active={cardFilter === "demo-done"} />
+          <MetricCard icon={Check} value={converted} label="Sale Done" sublabel="Closed won" onClick={() => toggleCard("sale-done")} active={cardFilter === "sale-done"} />
+          <MetricCard icon={X} value={lost} label="Closed - Dead" sublabel="Closed lost" onClick={() => toggleCard("lost")} active={cardFilter === "lost"} />
         </div>
       </section>
 
       <section>
         <div className="section-label">Follow-ups</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" />
-          <MetricCard variant="soft" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" />
-          <MetricCard variant="danger" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" />
-          <MetricCard icon={CheckCheck} value={completedFu} label="Completed Today" sublabel="Today" />
+          <MetricCard icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" onClick={() => toggleCard("fu-total")} active={cardFilter === "fu-total"} />
+          <MetricCard variant="soft" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" onClick={() => toggleCard("fu-today")} active={cardFilter === "fu-today"} />
+          <MetricCard variant="danger" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" onClick={() => toggleCard("fu-missed")} active={cardFilter === "fu-missed"} />
+          <MetricCard icon={CheckCheck} value={completedFu} label="Completed Today" sublabel="Today" onClick={() => toggleCard("fu-completed")} active={cardFilter === "fu-completed"} />
         </div>
       </section>
 
@@ -209,10 +214,10 @@ export default function AllLeads() {
       <section>
         <div className="section-label">Visits</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard variant="soft" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" />
-          <MetricCard icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" />
-          <MetricCard icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" />
-          <MetricCard variant="danger" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" />
+          <MetricCard variant="soft" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" onClick={() => toggleCard("v-today")} active={cardFilter === "v-today"} />
+          <MetricCard icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" onClick={() => toggleCard("v-scheduled-today")} active={cardFilter === "v-scheduled-today"} />
+          <MetricCard icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" onClick={() => toggleCard("v-completed-today")} active={cardFilter === "v-completed-today"} />
+          <MetricCard variant="danger" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" onClick={() => toggleCard("v-missed")} active={cardFilter === "v-missed"} />
         </div>
       </section>
 
