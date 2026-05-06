@@ -87,9 +87,21 @@ export default function AllLeads() {
       if (potential !== "all" && l.potential !== potential) return false;
       if (assigned !== "all" && l.assignedTo !== assigned) return false;
       if (dueToday && (!l.nextFollowUp || !isToday(new Date(l.nextFollowUp)))) return false;
+      if (visitFilter !== "all") {
+        const visits = l.visits ?? [];
+        const match = visits.some((v) => {
+          const dt = new Date(v.date);
+          if (visitFilter === "today") return isToday(dt) && (v.status === "Scheduled" || v.status === "Checked In");
+          if (visitFilter === "upcoming") return isFuture(dt) && v.status === "Scheduled";
+          if (visitFilter === "missed") return v.status === "Missed" || (isPast(dt) && !isToday(dt) && v.status === "Scheduled");
+          if (visitFilter === "completed") return v.status === "Completed";
+          return true;
+        });
+        if (!match) return false;
+      }
       return true;
     });
-  }, [leads, search, source, status, potential, assigned, dueToday]);
+  }, [leads, search, source, status, potential, assigned, dueToday, visitFilter]);
 
   // overview counts
   const total = leads.length;
