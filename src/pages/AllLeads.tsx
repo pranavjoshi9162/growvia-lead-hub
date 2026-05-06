@@ -47,7 +47,20 @@ export default function AllLeads() {
   const [assigned, setAssigned] = useState("all");
   const [dueToday, setDueToday] = useState(false);
   const [visitFilter, setVisitFilter] = useState<"all" | "today" | "upcoming" | "missed" | "completed">("all");
+  type CardKey =
+    | null
+    | "total" | "high" | "low"
+    | "cold" | "demo-sched" | "demo-done" | "sale-done" | "lost"
+    | "fu-total" | "fu-today" | "fu-missed" | "fu-completed"
+    | "v-today" | "v-scheduled-today" | "v-completed-today" | "v-missed";
+  const [cardFilter, setCardFilter] = useState<CardKey>(null);
   const [range, setRange] = useState<DateRange>("month");
+
+  const toggleCard = (k: CardKey) => setCardFilter((c) => (c === k ? null : k));
+  const clearAll = () => {
+    setSearch(""); setSource("all"); setStatusF("all"); setPotential("all");
+    setAssigned("all"); setDueToday(false); setVisitFilter("all"); setCardFilter(null);
+  };
 
   const [addOpen, setAddOpen] = useState(false);
   const [statusDialog, setStatusDialog] = useState<{ open: boolean; lead: Lead | null; initial?: LeadStatus; title?: string }>({ open: false, lead: null });
@@ -99,9 +112,32 @@ export default function AllLeads() {
         });
         if (!match) return false;
       }
+      if (cardFilter) {
+        const visits = l.visits ?? [];
+        const today0 = new Date(new Date().toDateString());
+        const fuDate = l.nextFollowUp ? new Date(l.nextFollowUp) : null;
+        switch (cardFilter) {
+          case "total": break;
+          case "high": if (l.potential !== "High") return false; break;
+          case "low": if (l.potential !== "Low") return false; break;
+          case "cold": if (l.status !== "Cold Call") return false; break;
+          case "demo-sched": if (l.status !== "Demo Schedule") return false; break;
+          case "demo-done": if (l.status !== "Demo Done") return false; break;
+          case "sale-done": if (l.status !== "Sale Done") return false; break;
+          case "lost": if (l.status !== "Closed - Dead") return false; break;
+          case "fu-total": if (!fuDate) return false; break;
+          case "fu-today": if (!fuDate || !isToday(fuDate)) return false; break;
+          case "fu-missed": if (!fuDate || fuDate >= today0) return false; break;
+          case "fu-completed": return false; // no completion tracking yet
+          case "v-today": if (!visits.some((v) => isToday(new Date(v.date)))) return false; break;
+          case "v-scheduled-today": if (!visits.some((v) => isToday(new Date(v.date)) && v.status === "Scheduled")) return false; break;
+          case "v-completed-today": if (!visits.some((v) => isToday(new Date(v.date)) && v.status === "Completed")) return false; break;
+          case "v-missed": if (!visits.some((v) => v.status === "Missed" || (isPast(new Date(v.date)) && !isToday(new Date(v.date)) && v.status === "Scheduled"))) return false; break;
+        }
+      }
       return true;
     });
-  }, [leads, search, source, status, potential, assigned, dueToday, visitFilter]);
+  }, [leads, search, source, status, potential, assigned, dueToday, visitFilter, cardFilter]);
 
   // overview counts
   const total = leads.length;
@@ -146,26 +182,31 @@ export default function AllLeads() {
 
       {/* Overview cards */}
       <section>
-        <div className="section-label">Leads Overview</div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Leads Overview</div>
+          {cardFilter && (
+            <button onClick={() => setCardFilter(null)} className="text-xs text-primary hover:underline">Clear card filter</button>
+          )}
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard variant="soft" icon={Users} value={total} label="Total Leads" sublabel="This month" />
-          <MetricCard icon={TrendingUp} value={high} label="High Potential" sublabel="Hot Leads" />
-          <MetricCard icon={TrendingDown} value={low} label="Low Potential" sublabel="Cold Leads" />
-          <MetricCard icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" />
-          <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" />
-          <MetricCard icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" />
-          <MetricCard icon={Check} value={converted} label="Sale Done" sublabel="Closed won" />
-          <MetricCard icon={X} value={lost} label="Closed - Dead" sublabel="Closed lost" />
+          <MetricCard variant="soft" icon={Users} value={total} label="Total Leads" sublabel="This month" onClick={() => toggleCard("total")} active={cardFilter === "total"} />
+          <MetricCard icon={TrendingUp} value={high} label="High Potential" sublabel="Hot Leads" onClick={() => toggleCard("high")} active={cardFilter === "high"} />
+          <MetricCard icon={TrendingDown} value={low} label="Low Potential" sublabel="Cold Leads" onClick={() => toggleCard("low")} active={cardFilter === "low"} />
+          <MetricCard icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" onClick={() => toggleCard("cold")} active={cardFilter === "cold"} />
+          <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" onClick={() => toggleCard("demo-sched")} active={cardFilter === "demo-sched"} />
+          <MetricCard icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" onClick={() => toggleCard("demo-done")} active={cardFilter === "demo-done"} />
+          <MetricCard icon={Check} value={converted} label="Sale Done" sublabel="Closed won" onClick={() => toggleCard("sale-done")} active={cardFilter === "sale-done"} />
+          <MetricCard icon={X} value={lost} label="Closed - Dead" sublabel="Closed lost" onClick={() => toggleCard("lost")} active={cardFilter === "lost"} />
         </div>
       </section>
 
       <section>
         <div className="section-label">Follow-ups</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" />
-          <MetricCard variant="soft" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" />
-          <MetricCard variant="danger" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" />
-          <MetricCard icon={CheckCheck} value={completedFu} label="Completed Today" sublabel="Today" />
+          <MetricCard icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" onClick={() => toggleCard("fu-total")} active={cardFilter === "fu-total"} />
+          <MetricCard variant="soft" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" onClick={() => toggleCard("fu-today")} active={cardFilter === "fu-today"} />
+          <MetricCard variant="danger" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" onClick={() => toggleCard("fu-missed")} active={cardFilter === "fu-missed"} />
+          <MetricCard icon={CheckCheck} value={completedFu} label="Completed Today" sublabel="Today" onClick={() => toggleCard("fu-completed")} active={cardFilter === "fu-completed"} />
         </div>
       </section>
 
@@ -173,10 +214,10 @@ export default function AllLeads() {
       <section>
         <div className="section-label">Visits</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard variant="soft" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" />
-          <MetricCard icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" />
-          <MetricCard icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" />
-          <MetricCard variant="danger" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" />
+          <MetricCard variant="soft" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" onClick={() => toggleCard("v-today")} active={cardFilter === "v-today"} />
+          <MetricCard icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" onClick={() => toggleCard("v-scheduled-today")} active={cardFilter === "v-scheduled-today"} />
+          <MetricCard icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" onClick={() => toggleCard("v-completed-today")} active={cardFilter === "v-completed-today"} />
+          <MetricCard variant="danger" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" onClick={() => toggleCard("v-missed")} active={cardFilter === "v-missed"} />
         </div>
       </section>
 
@@ -219,7 +260,8 @@ export default function AllLeads() {
           <Checkbox checked={dueToday} onCheckedChange={(v) => setDueToday(!!v)} />
           Due Today
         </label>
-        <Button onClick={() => setAddOpen(true)} className="ml-auto gap-2">
+        <Button variant="outline" onClick={clearAll} className="gap-2 ml-auto">Clear Filters</Button>
+        <Button onClick={() => setAddOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Add Manual Lead
         </Button>
       </div>

@@ -9,9 +9,10 @@ interface MetricCardProps {
   variant?: "default" | "soft" | "danger" | "warning";
   className?: string;
   onClick?: () => void;
+  active?: boolean;
 }
 
-export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick }: MetricCardProps) {
+export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick, active }: MetricCardProps) {
   const styles = {
     default: "bg-card border-border",
     soft: "border-primary/20 bg-soft-gradient",
@@ -40,6 +41,7 @@ export function MetricCard({ value, label, sublabel, icon: Icon, variant = "defa
         "w-full text-left rounded-xl border p-4 transition-all hover:shadow-[var(--shadow-card)]",
         styles,
         interactive,
+        active && "ring-2 ring-primary border-primary shadow-[var(--shadow-card)]",
         className
       )}
     >
