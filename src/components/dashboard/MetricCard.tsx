@@ -41,6 +41,7 @@ export function MetricCard({ value, label, sublabel, icon: Icon, variant = "defa
         "w-full text-left rounded-xl border p-4 transition-all hover:shadow-[var(--shadow-card)]",
         styles,
         interactive,
+        active && "ring-2 ring-primary border-primary shadow-[var(--shadow-card)]",
         className
       )}
     >
