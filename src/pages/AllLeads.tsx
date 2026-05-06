@@ -169,6 +169,17 @@ export default function AllLeads() {
         </div>
       </section>
 
+      {/* Visits Summary */}
+      <section>
+        <div className="section-label">Visits</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard variant="soft" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" />
+          <MetricCard icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" />
+          <MetricCard icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" />
+          <MetricCard variant="danger" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" />
+        </div>
+      </section>
+
       {/* Filters */}
       <div className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[220px]">
