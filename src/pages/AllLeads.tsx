@@ -297,10 +297,20 @@ export default function AllLeads() {
                         {l.nextFollowUp ? format(new Date(l.nextFollowUp), "dd MMM yyyy") : "—"}
                       </td>
                       <td className="py-3 pr-4 text-muted-foreground">
-                        {v ? format(new Date(v.date), "dd MMM yyyy") : "—"}
+                        {v ? (isToday(new Date(v.date)) ? <span className="text-warning font-medium">Today · {format(new Date(v.date), "dd MMM")}</span> : format(new Date(v.date), "dd MMM yyyy")) : "—"}
                       </td>
                       <td className="py-3 pr-4">
-                        {v ? <Badge variant="outline" className="bg-warning-soft text-warning border-warning/30">{v.status}</Badge> : <span className="text-muted-foreground">—</span>}
+                        {v ? (
+                          <Badge variant="outline" className={
+                            isToday(new Date(v.date))
+                              ? "bg-warning-soft text-warning border-warning/30"
+                              : v.status === "Completed" ? "bg-success-soft text-success border-success/30"
+                              : v.status === "Missed" ? "bg-destructive/10 text-destructive border-destructive/30"
+                              : "bg-info-soft text-info border-info/30"
+                          }>
+                            {isToday(new Date(v.date)) && v.status === "Scheduled" ? "Today" : v.status}
+                          </Badge>
+                        ) : <span className="text-muted-foreground">—</span>}
                       </td>
                       <td className="py-3 pr-4">{l.assignedTo}</td>
                       <td className="py-3 pr-4">
