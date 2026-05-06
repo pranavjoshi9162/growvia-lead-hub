@@ -12,7 +12,7 @@ interface MetricCardProps {
   active?: boolean;
 }
 
-export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick }: MetricCardProps) {
+export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick, active }: MetricCardProps) {
   const styles = {
     default: "bg-card border-border",
     soft: "border-primary/20 bg-soft-gradient",
