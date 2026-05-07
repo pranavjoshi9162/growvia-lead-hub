@@ -10,9 +10,10 @@ interface MetricCardProps {
   className?: string;
   onClick?: () => void;
   active?: boolean;
+  compact?: boolean;
 }
 
-export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick, active }: MetricCardProps) {
+export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick, active, compact }: MetricCardProps) {
   const styles = {
     default: "bg-card border-border",
     soft: "border-primary/20 bg-soft-gradient",
