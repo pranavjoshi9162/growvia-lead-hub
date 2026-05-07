@@ -39,7 +39,7 @@ export function MetricCard({ value, label, sublabel, icon: Icon, variant = "defa
       onClick={onClick}
       type={onClick ? "button" : undefined}
       className={cn(
-        "w-full text-left rounded-xl border transition-all hover:shadow-[var(--shadow-card)]",
+        "w-full h-full text-left rounded-xl border transition-all hover:shadow-[var(--shadow-card)] flex flex-col",
         compact ? "p-3" : "p-4",
         styles,
         interactive,
