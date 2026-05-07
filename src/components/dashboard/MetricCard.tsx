@@ -10,9 +10,10 @@ interface MetricCardProps {
   className?: string;
   onClick?: () => void;
   active?: boolean;
+  compact?: boolean;
 }
 
-export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick, active }: MetricCardProps) {
+export function MetricCard({ value, label, sublabel, icon: Icon, variant = "default", className, onClick, active, compact }: MetricCardProps) {
   const styles = {
     default: "bg-card border-border",
     soft: "border-primary/20 bg-soft-gradient",
@@ -38,7 +39,8 @@ export function MetricCard({ value, label, sublabel, icon: Icon, variant = "defa
       onClick={onClick}
       type={onClick ? "button" : undefined}
       className={cn(
-        "w-full text-left rounded-xl border p-4 transition-all hover:shadow-[var(--shadow-card)]",
+        "w-full text-left rounded-xl border transition-all hover:shadow-[var(--shadow-card)]",
+        compact ? "p-3" : "p-4",
         styles,
         interactive,
         active && "ring-2 ring-primary border-primary shadow-[var(--shadow-card)]",
@@ -47,13 +49,13 @@ export function MetricCard({ value, label, sublabel, icon: Icon, variant = "defa
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-2xl font-bold tracking-tight text-foreground">{value}</div>
-          <div className="text-sm font-medium text-foreground mt-1 truncate">{label}</div>
-          {sublabel && <div className="text-xs text-muted-foreground mt-0.5">{sublabel}</div>}
+          <div className={cn("font-bold tracking-tight text-foreground", compact ? "text-xl" : "text-2xl")}>{value}</div>
+          <div className={cn("font-medium text-foreground truncate", compact ? "text-xs mt-0.5" : "text-sm mt-1")}>{label}</div>
+          {sublabel && <div className={cn("text-muted-foreground", compact ? "text-[11px] mt-0.5" : "text-xs mt-0.5")}>{sublabel}</div>}
         </div>
         {Icon && (
-          <div className={cn("h-8 w-8 rounded-lg grid place-items-center shrink-0", iconBg)}>
-            <Icon className="h-4 w-4" />
+          <div className={cn("rounded-lg grid place-items-center shrink-0", iconBg, compact ? "h-7 w-7" : "h-8 w-8")}>
+            <Icon className={cn(compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
           </div>
         )}
       </div>

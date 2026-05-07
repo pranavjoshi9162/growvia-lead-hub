@@ -79,7 +79,7 @@ export default function LeadSummary() {
       </div>
 
       {/* Top KPI grouped sections (compact) */}
-      <div className="space-y-4">
+      <div className="space-y-2">
       {(["today", "month", "year", "all"] as RangeTab[]).map((rt) => {
         const k = KPI_DATA[rt];
         const titles: Record<RangeTab, string> = {
@@ -88,11 +88,11 @@ export default function LeadSummary() {
         const suffix = rt === "today" ? " (Today)" : "";
         return (
           <section key={rt}>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h2 className="text-sm font-semibold text-foreground">{titles[rt]}</h2>
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{titles[rt]}</h2>
               {rt === "month" && (
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-6 w-[120px] bg-background text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {MONTHS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
@@ -100,7 +100,7 @@ export default function LeadSummary() {
               )}
               {rt === "year" && (
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="h-7 w-[110px] bg-background text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-6 w-[100px] bg-background text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                   </SelectContent>
@@ -109,8 +109,8 @@ export default function LeadSummary() {
               {rt === "all" && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className={cn("h-7 w-[230px] justify-start text-left font-normal text-xs", !customRange && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    <Button variant="outline" size="sm" className={cn("h-6 w-[210px] justify-start text-left font-normal text-xs", !customRange && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3 w-3" />
                       {customRange?.from ? (
                         customRange.to ? `${format(customRange.from, "LLL d, y")} - ${format(customRange.to, "LLL d, y")}` : format(customRange.from, "LLL d, y")
                       ) : "Pick a date range"}
@@ -122,14 +122,13 @@ export default function LeadSummary() {
                 </Popover>
               )}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <MetricCard variant="soft" icon={Megaphone} value={k.leads} label={`Total Leads${suffix}`}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <MetricCard compact variant="soft" icon={Megaphone} value={k.leads} label={`Total Leads${suffix}`}
                 onClick={() => goLeads("all")} />
-              <MetricCard variant="soft" icon={Briefcase} value={k.sales} label={`Total Sales${suffix}`}
+              <MetricCard compact variant="soft" icon={Briefcase} value={k.sales} label={`Total Sales${suffix}`}
+                sublabel={`${k.conv} Conversion`}
                 onClick={() => openSales("Closed", "Closed Sales")} />
-              <MetricCard variant="soft" icon={Target} value={k.conv} label={`Conversion Rate${suffix}`}
-                onClick={() => openSales("Conversion", "Conversion Rate Breakdown")} />
-              <MetricCard variant="soft" icon={IndianRupee} value={k.rev} label={`Revenue${suffix}`}
+              <MetricCard compact variant="soft" icon={IndianRupee} value={k.rev} label={`Revenue${suffix}`}
                 onClick={() => openSales("MRR", "Revenue Breakdown")} />
             </div>
           </section>
