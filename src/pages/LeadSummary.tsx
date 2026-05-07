@@ -1,20 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
 import {
   Users, CreditCard, Hourglass, Flame, AlertTriangle, CalendarX,
   Megaphone, PhoneCall, Monitor, CheckCircle2, XCircle,
-  Briefcase, ArrowUpRight, Target, IndianRupee, ListChecks, CalendarClock, AlarmClock, CheckCheck,
-  Store, CircleDot, Gift, CalendarIcon, TrendingUp, TrendingDown,
+  ListChecks, CalendarClock, AlarmClock, CheckCheck,
+  Store, CircleDot, Gift,
+  TrendingUp, TrendingDown,
   MapPin, CalendarPlus, CheckCircle, AlertOctagon
 } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SalesFunnel } from "@/components/dashboard/SalesFunnel";
-import { TrialPipeline } from "@/components/dashboard/TrialPipeline";
+import { BusinessOverview } from "@/components/dashboard/BusinessOverview";
 import { UpcomingFollowUps } from "@/components/dashboard/UpcomingFollowUps";
 import { ClientActivityMonitor } from "@/components/dashboard/ClientActivityMonitor";
 import { ConversionCycleChart } from "@/components/dashboard/ConversionCycleChart";
-import { LeadStageBreakdown } from "@/components/dashboard/LeadStageBreakdown";
 import { DrillDownDrawer } from "@/components/dashboard/DrillDownDrawer";
 import { ClientsList } from "@/components/dashboard/ClientsList";
 import { SalesBreakdown } from "@/components/dashboard/SalesBreakdown";
@@ -22,35 +21,13 @@ import { FollowUpsList } from "@/components/dashboard/FollowUpsList";
 import { ClientStatus } from "@/lib/clientsData";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { DateRange } from "react-day-picker";
 
 type ClientFilter = ClientStatus | "All" | "Active";
 type SalesFilter = "Closed" | "TrialToPaid" | "Conversion" | "MRR";
 type FollowFilter = "All" | "Today" | "Missed" | "Completed";
-type RangeTab = "today" | "month" | "year" | "all";
-
-const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 6 }, (_, i) => currentYear - i);
-
-// KPI data per tab
-const KPI_DATA: Record<RangeTab, { leads: string; sales: string; conv: string; rev: string }> = {
-  today: { leads: "8", sales: "2", conv: "25%", rev: "₹4.2K" },
-  month: { leads: "124", sales: "9", conv: "60%", rev: "₹36K" },
-  year: { leads: "1,420", sales: "112", conv: "55%", rev: "₹4.8L" },
-  all: { leads: "3,260", sales: "284", conv: "52%", rev: "₹12.6L" },
-};
 
 export default function LeadSummary() {
   const navigate = useNavigate();
-  
-  const [selectedMonth, setSelectedMonth] = useState<string>(MONTHS[new Date().getMonth()]);
-  const [selectedYear, setSelectedYear] = useState<string>(String(currentYear));
-  const [customRange, setCustomRange] = useState<DateRange | undefined>();
 
   const [clientDrawer, setClientDrawer] = useState<{ open: boolean; filter: ClientFilter; title: string }>({
     open: false, filter: "All", title: "",
@@ -67,7 +44,6 @@ export default function LeadSummary() {
   const openSales = (filter: SalesFilter, title: string) => setSalesDrawer({ open: true, filter, title });
   const openFollow = (filter: FollowFilter, title: string) => setFollowDrawer({ open: true, filter, title });
 
-
   return (
     <div className="space-y-5 max-w-[1500px] mx-auto">
       {/* Header */}
@@ -78,65 +54,10 @@ export default function LeadSummary() {
         </div>
       </div>
 
-      {/* Top KPI grouped sections (compact) */}
-      <div className="space-y-2">
-      {(["today", "month", "year", "all"] as RangeTab[]).map((rt) => {
-        const k = KPI_DATA[rt];
-        const titles: Record<RangeTab, string> = {
-          today: "Today", month: "This Month", year: "This Year", all: "All Time",
-        };
-        const suffix = rt === "today" ? " (Today)" : "";
-        return (
-          <section key={rt}>
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{titles[rt]}</h2>
-              {rt === "month" && (
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="h-6 w-[120px] bg-background text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              {rt === "year" && (
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="h-6 w-[100px] bg-background text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              {rt === "all" && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className={cn("h-6 w-[210px] justify-start text-left font-normal text-xs", !customRange && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {customRange?.from ? (
-                        customRange.to ? `${format(customRange.from, "LLL d, y")} - ${format(customRange.to, "LLL d, y")}` : format(customRange.from, "LLL d, y")
-                      ) : "Pick a date range"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="range" selected={customRange} onSelect={setCustomRange} numberOfMonths={2} initialFocus className={cn("p-3 pointer-events-auto")} />
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <MetricCard compact variant="soft" icon={Megaphone} value={k.leads} label={`Total Leads${suffix}`}
-                onClick={() => goLeads("all")} />
-              <MetricCard compact variant="soft" icon={Briefcase} value={k.sales} label={`Total Sales${suffix}`}
-                sublabel={`${k.conv} Conversion`}
-                onClick={() => openSales("Closed", "Closed Sales")} />
-              <MetricCard compact variant="soft" icon={IndianRupee} value={k.rev} label={`Revenue${suffix}`}
-                onClick={() => openSales("MRR", "Revenue Breakdown")} />
-            </div>
-          </section>
-        );
-      })}
-      </div>
+      {/* 1. Business Overview (KPI / Graph) */}
+      <BusinessOverview />
 
-      {/* LEADS (moved to top) */}
+      {/* 2. LEADS */}
       <section>
         <div className="flex items-center justify-between mb-2">
           <div className="section-label !mb-0">Leads</div>
@@ -150,12 +71,11 @@ export default function LeadSummary() {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Total Leads with hot/cold breakdown */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 auto-rows-fr">
           <button
             type="button"
             onClick={() => goLeads("all")}
-            className="w-full text-left rounded-xl border border-border bg-card p-4 transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5 hover:border-primary/40 cursor-pointer"
+            className="h-full w-full text-left rounded-xl border border-border bg-card p-4 transition-all hover:shadow-[var(--shadow-card)] hover:-translate-y-0.5 hover:border-primary/40 cursor-pointer flex flex-col"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
@@ -167,7 +87,7 @@ export default function LeadSummary() {
                 <Megaphone className="h-4 w-4" />
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-border grid grid-cols-2 gap-2">
+            <div className="mt-auto pt-3 border-t border-border grid grid-cols-2 gap-2">
               <div
                 role="button"
                 onClick={(e) => { e.stopPropagation(); goLeads("high"); }}
@@ -206,27 +126,7 @@ export default function LeadSummary() {
         </div>
       </section>
 
-      {/* VISITS */}
-      <section>
-        <div className="flex items-center justify-between mb-2">
-          <div className="section-label !mb-0">Visits</div>
-          <Select defaultValue="today">
-            <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="this-week">This Week</SelectItem>
-              <SelectItem value="this-month">This Month</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <MetricCard variant="soft" icon={MapPin} value={5} label="Total Visits Today" sublabel="All types" />
-          <MetricCard icon={CalendarPlus} value={3} label="Visits Scheduled Today" sublabel="Planned" />
-          <MetricCard icon={CheckCircle} value={2} label="Visits Completed Today" sublabel="Done" />
-          <MetricCard variant="danger" icon={AlertOctagon} value={1} label="Missed Visits" sublabel="Action needed" />
-        </div>
-      </section>
-
+      {/* 3. CLIENTS */}
       <section>
         <div className="flex items-center justify-between mb-2">
           <div className="section-label !mb-0">Clients</div>
@@ -240,7 +140,7 @@ export default function LeadSummary() {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 auto-rows-fr">
           <MetricCard variant="soft" icon={Users} value={18} label="Total Clients" sublabel="This month"
             onClick={() => openClients("All", "Total Clients")} />
           <MetricCard variant="soft" icon={CreditCard} value={11} label="Paid Clients" sublabel="This month"
@@ -256,43 +156,28 @@ export default function LeadSummary() {
         </div>
       </section>
 
-      {/* PRODUCT METRICS */}
-      <section>
-        <div className="section-label">Product Metrics</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <MetricCard variant="soft" icon={Store} value={42} label="Total Outlets" sublabel="Across all clients" />
-          <MetricCard variant="soft" icon={CircleDot} value={28} label="Total Wheels" sublabel="Active campaigns" />
-          <MetricCard variant="soft" icon={Gift} value="3.2K" label="Total Loyalty Cards" sublabel="Issued" />
-        </div>
-      </section>
-
-      {/* SALES */}
+      {/* 4. VISITS */}
       <section>
         <div className="flex items-center justify-between mb-2">
-          <div className="section-label !mb-0">Sales</div>
-          <Select defaultValue="this-month">
+          <div className="section-label !mb-0">Visits</div>
+          <Select defaultValue="today">
             <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="this-week">This Week</SelectItem>
               <SelectItem value="this-month">This Month</SelectItem>
-              <SelectItem value="this-year">This Year</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <MetricCard variant="soft" icon={Briefcase} value={3} label="Closed Sales" sublabel="This month"
-            onClick={() => openSales("Closed", "Closed Sales")} />
-          <MetricCard variant="soft" icon={ArrowUpRight} value={6} label="Trial → Paid" sublabel="This month"
-            onClick={() => openSales("TrialToPaid", "Trial → Paid Conversions")} />
-          <MetricCard variant="soft" icon={Target} value="60%" label="Conversion Rate" sublabel="This month"
-            onClick={() => openSales("Conversion", "Conversion Rate Breakdown")} />
-          <MetricCard variant="soft" icon={IndianRupee} value="₹36K" label="Monthly Recurring Revenue" sublabel="This month"
-            onClick={() => openSales("MRR", "Monthly Recurring Revenue")} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 auto-rows-fr">
+          <MetricCard variant="soft" icon={MapPin} value={5} label="Total Visits Today" sublabel="All types" />
+          <MetricCard icon={CalendarPlus} value={3} label="Visits Scheduled Today" sublabel="Planned" />
+          <MetricCard icon={CheckCircle} value={2} label="Visits Completed Today" sublabel="Done" />
+          <MetricCard variant="danger" icon={AlertOctagon} value={1} label="Missed Visits" sublabel="Action needed" />
         </div>
       </section>
 
-      {/* FOLLOW-UPS */}
+      {/* 5. FOLLOW-UPS */}
       <section>
         <div className="flex items-center justify-between mb-2">
           <div className="section-label !mb-0">Follow-ups</div>
@@ -306,7 +191,7 @@ export default function LeadSummary() {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 auto-rows-fr">
           <MetricCard icon={ListChecks} value={6} label="Total Follow-ups" sublabel="Open"
             onClick={() => openFollow("All", "Total Follow-ups")} />
           <MetricCard icon={CalendarClock} value={3} label="Today's Follow-ups" sublabel="Due today" variant="soft"
@@ -318,25 +203,49 @@ export default function LeadSummary() {
         </div>
       </section>
 
-      {/* Funnels */}
+      {/* 6. PRODUCT METRICS */}
       <section>
-        <div className="section-label">Funnels</div>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-border bg-card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-base font-semibold">Sales Funnel</h3>
-                <p className="text-sm text-muted-foreground">Leads moving toward paid accounts.</p>
-              </div>
-              <span className="text-xs font-semibold text-primary-foreground bg-primary px-3 py-1 rounded-full">April</span>
-            </div>
-            <SalesFunnel />
-          </div>
-          <TrialPipeline />
+        <div className="flex items-center justify-between mb-2">
+          <div className="section-label !mb-0">Product Metrics</div>
+          <Select defaultValue="this-month">
+            <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="this-week">This Week</SelectItem>
+              <SelectItem value="this-month">This Month</SelectItem>
+              <SelectItem value="this-year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 auto-rows-fr">
+          <MetricCard variant="soft" icon={Store} value={42} label="Total Outlets" sublabel="Across all clients" />
+          <MetricCard variant="soft" icon={CircleDot} value={28} label="Total Wheels" sublabel="Active campaigns" />
+          <MetricCard variant="soft" icon={Gift} value="3.2K" label="Total Loyalty Cards" sublabel="Issued" />
         </div>
       </section>
 
-      {/* Activity + Follow-ups list */}
+      {/* 7. Funnels (Sales Funnel only, full width) */}
+      <section>
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+            <div>
+              <h3 className="text-base font-semibold">Sales Funnel</h3>
+              <p className="text-sm text-muted-foreground">Leads moving toward paid accounts.</p>
+            </div>
+            <Select defaultValue="month">
+              <SelectTrigger className="h-7 w-[140px] bg-background text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="quarter">This Quarter</SelectItem>
+                <SelectItem value="year">This Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <SalesFunnel />
+        </div>
+      </section>
+
+      {/* 8. Activity + Follow-ups list */}
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2">
           <ClientActivityMonitor />
@@ -344,13 +253,9 @@ export default function LeadSummary() {
         <UpcomingFollowUps />
       </section>
 
-      {/* Analytics */}
+      {/* 9. Analytics — Conversion Cycle (full width, no Lead Stage Breakdown) */}
       <section>
-        <div className="section-label">Analytics</div>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <ConversionCycleChart />
-          <LeadStageBreakdown />
-        </div>
+        <ConversionCycleChart />
       </section>
 
       {/* Drawers */}
