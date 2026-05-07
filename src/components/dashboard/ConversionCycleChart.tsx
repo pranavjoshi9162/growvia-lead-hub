@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { TrendingUp } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const cycleData = [
   { bucket: "0–10 Days", leads: 10, color: "hsl(var(--success))", soft: "hsl(var(--success-soft))" },
@@ -9,12 +11,23 @@ const cycleData = [
 const max = Math.max(...cycleData.map((d) => d.leads));
 
 export function ConversionCycleChart() {
+  const [range, setRange] = useState("month");
   return (
     <div className="rounded-xl border border-border bg-card p-5 h-full">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
-        <div>
-          <h3 className="text-base font-semibold">Lead to Client Conversion Cycle</h3>
-          <p className="text-sm text-muted-foreground">How long leads take to convert into paid clients.</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div>
+            <h3 className="text-base font-semibold">Lead to Client Conversion Cycle</h3>
+            <p className="text-sm text-muted-foreground">How long leads take to convert into paid clients.</p>
+          </div>
+          <Select value={range} onValueChange={setRange}>
+            <SelectTrigger className="h-7 w-[130px] bg-background text-xs ml-2"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="quarter">This Quarter</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-primary" />
