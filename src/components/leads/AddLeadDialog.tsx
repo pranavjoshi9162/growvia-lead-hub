@@ -240,170 +240,232 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
             </section>
           </div>
         ) : (
-          <div className="px-6 py-5 space-y-5">
-            {/* Basic */}
-            <section className="rounded-xl border p-5">
-              <SectionHeader icon={User2} title="Basic Details" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5"><Label>Client Name</Label><Input value={form.name} onChange={(e) => updateD("name", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Phone Number</Label><Input value={form.phone} onChange={(e) => updateD("phone", e.target.value)} /></div>
-                <div className="space-y-1.5 md:col-span-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => updateD("email", e.target.value)} /></div>
-              </div>
-            </section>
+          <div className="px-6 py-4">
+            {(() => {
+              const count = (...vals: any[]) => vals.filter((v) => {
+                if (v === null || v === undefined) return false;
+                if (typeof v === "string") return v.trim() !== "";
+                if (typeof v === "object") return Object.values(v).some(Boolean);
+                return true;
+              }).length;
 
-            {/* Business */}
-            <section className="rounded-xl border p-5">
-              <SectionHeader icon={Building2} title="Business Details" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5"><Label>Business Name</Label><Input value={form.business} onChange={(e) => updateD("business", e.target.value)} /></div>
-                <div className="space-y-1.5">
-                  <Label>Business Type</Label>
-                  <Select value={form.businessType || undefined} onValueChange={(v) => updateD("businessType", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                    <SelectContent>{BUSINESS_TYPES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5 md:col-span-2"><Label>Outlet Address</Label><Input value={form.outletAddress} onChange={(e) => updateD("outletAddress", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>City</Label><Input value={form.city} onChange={(e) => updateD("city", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>State</Label><Input value={form.state} onChange={(e) => updateD("state", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Pincode</Label><Input value={form.pincode} onChange={(e) => updateD("pincode", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Google Maps Location</Label><Input value={form.mapsLocation} onChange={(e) => updateD("mapsLocation", e.target.value)} placeholder="Paste maps URL" /></div>
-                <div className="space-y-1.5"><Label>Number of Outlets</Label><Input type="number" min="1" value={form.outletsCount} onChange={(e) => updateD("outletsCount", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Number of Staff</Label><Input type="number" min="1" value={form.staffCount} onChange={(e) => updateD("staffCount", e.target.value)} /></div>
-              </div>
-            </section>
+              const counts = {
+                basic: count(form.name, form.phone, form.email),
+                business: count(form.business, form.businessType, form.outletAddress, form.city, form.state, form.pincode, form.mapsLocation, form.outletsCount, form.staffCount),
+                operational: count(form.currentPlatform, form.existingLoyalty, form.whatsappMarketing, form.monthlyCustomers, form.revenueRange),
+                qualification: count(form.potential, form.budgetRange, form.decisionMaker, form.decisionMakerRole, form.features),
+                notes: count(form.clientNotes, form.adminComments, form.objections, form.internalNotes),
+                status: count(form.substatus, form.nextFollowUp),
+                visit: form.visitRequired ? count(form.visitDate, form.visitTime, form.visitNotes) + 1 : 0,
+              };
 
-            {/* Operational */}
-            <section className="rounded-xl border p-5">
-              <SectionHeader icon={Settings2} title="Operational Details" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5"><Label>Current Platform Using</Label><Input value={form.currentPlatform} onChange={(e) => updateD("currentPlatform", e.target.value)} placeholder="Petpooja, Posist…" /></div>
-                <div className="space-y-1.5"><Label>Existing Loyalty System</Label><Input value={form.existingLoyalty} onChange={(e) => updateD("existingLoyalty", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>WhatsApp Marketing Using</Label><Input value={form.whatsappMarketing} onChange={(e) => updateD("whatsappMarketing", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Monthly Customer Volume</Label><Input value={form.monthlyCustomers} onChange={(e) => updateD("monthlyCustomers", e.target.value)} /></div>
-                <div className="space-y-1.5 md:col-span-2"><Label>Approx Revenue Range</Label><Input value={form.revenueRange} onChange={(e) => updateD("revenueRange", e.target.value)} placeholder="e.g. ₹5L–₹10L / month" /></div>
-              </div>
-            </section>
-
-            {/* Qualification */}
-            <section className="rounded-xl border p-5">
-              <SectionHeader icon={Target} title="Sales Qualification" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Lead Potential</Label>
-                  <Select value={form.potential || undefined} onValueChange={(v) => updateD("potential", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select potential" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="Cold">Cold</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5"><Label>Budget Range</Label><Input value={form.budgetRange} onChange={(e) => updateD("budgetRange", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Decision Maker Name</Label><Input value={form.decisionMaker} onChange={(e) => updateD("decisionMaker", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label>Decision Maker Role</Label><Input value={form.decisionMakerRole} onChange={(e) => updateD("decisionMakerRole", e.target.value)} placeholder="Owner, Manager…" /></div>
-                <div className="md:col-span-2 space-y-2">
-                  <Label>Interested Features</Label>
-                  <div className="flex flex-wrap gap-x-5 gap-y-2">
-                    {[
-                      ["loyalty", "Loyalty"],
-                      ["wheel", "Wheel"],
-                      ["reviews", "Reviews"],
-                      ["whatsapp", "WhatsApp Campaign"],
-                      ["fullSuite", "Full Suite"],
-                    ].map(([k, label]) => (
-                      <label key={k} className="flex items-center gap-2 text-sm cursor-pointer">
-                        <Checkbox
-                          checked={(form.features as any)[k]}
-                          onCheckedChange={(v) => updateD("features", { ...form.features, [k]: !!v })}
-                        />
-                        {label}
-                      </label>
-                    ))}
+              const Header = ({ icon: Icon, title, subtitle, filled }: any) => (
+                <div className="flex items-center gap-3 flex-1 text-left">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 grid place-items-center text-primary shrink-0">
+                    <Icon className="h-4 w-4" />
                   </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Notes */}
-            <section className="rounded-xl border p-5">
-              <SectionHeader icon={MessagesSquare} title="Discussion & Notes" />
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-1.5"><Label>Client Discussion Notes</Label><Textarea rows={2} value={form.clientNotes} onChange={(e) => updateD("clientNotes", e.target.value)} /></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5"><Label>Admin Comments</Label><Textarea rows={2} value={form.adminComments} onChange={(e) => updateD("adminComments", e.target.value)} /></div>
-                  <div className="space-y-1.5"><Label>Objections</Label><Textarea rows={2} value={form.objections} onChange={(e) => updateD("objections", e.target.value)} /></div>
-                </div>
-                <div className="space-y-1.5"><Label>Internal Notes</Label><Textarea rows={2} value={form.internalNotes} onChange={(e) => updateD("internalNotes", e.target.value)} /></div>
-              </div>
-            </section>
-
-            {/* Status */}
-            <section className="rounded-xl border p-5">
-              <SectionHeader icon={Activity} title="Status Management" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Main Status</Label>
-                  <Select value={form.status} onValueChange={(v) => updateD("status", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Substatus</Label>
-                  <Select value={form.substatus || undefined} onValueChange={(v) => updateD("substatus", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select substatus" /></SelectTrigger>
-                    <SelectContent>{subOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5"><Label>Follow-up Date</Label><Input type="date" value={form.nextFollowUp} onChange={(e) => updateD("nextFollowUp", e.target.value)} /></div>
-                <div className="space-y-1.5">
-                  <Label>Assigned Sales Person</Label>
-                  <Select value={form.assignedTo} onValueChange={(v) => updateD("assignedTo", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{SALES_PEOPLE.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Lead Source</Label>
-                  <Select value={form.source} onValueChange={(v) => updateD("source", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </section>
-
-            {/* Visit */}
-            <section className="rounded-xl border p-5">
-              <SectionHeader icon={MapPin} title="Visit Management" />
-              <div className="flex items-center gap-2 mb-3">
-                <Checkbox id="vr" checked={form.visitRequired} onCheckedChange={(v) => updateD("visitRequired", !!v)} />
-                <Label htmlFor="vr" className="cursor-pointer">Visit Required</Label>
-              </div>
-              {form.visitRequired && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label>Visit Type</Label>
-                    <Select value={form.visitType} onValueChange={(v) => updateD("visitType", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{VISIT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                    </Select>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold leading-tight">{title}</div>
+                    <div className="text-xs text-muted-foreground truncate">{subtitle}</div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label>Assigned Sales Rep</Label>
-                    <Select value={form.visitAssignedTo} onValueChange={(v) => updateD("visitAssignedTo", v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{SALES_PEOPLE.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5"><Label>Visit Date</Label><Input type="date" value={form.visitDate} onChange={(e) => updateD("visitDate", e.target.value)} /></div>
-                  <div className="space-y-1.5"><Label>Visit Time</Label><Input type="time" value={form.visitTime} onChange={(e) => updateD("visitTime", e.target.value)} /></div>
-                  <div className="space-y-1.5 md:col-span-2"><Label>Visit Notes</Label><Textarea rows={2} value={form.visitNotes} onChange={(e) => updateD("visitNotes", e.target.value)} /></div>
+                  <span className={cn(
+                    "text-[11px] px-2 py-0.5 rounded-full border shrink-0 mr-2",
+                    filled > 0 ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted text-muted-foreground border-border"
+                  )}>
+                    {filled > 0 ? `${filled} filled` : "Empty"}
+                  </span>
                 </div>
-              )}
-            </section>
+              );
+
+              return (
+                <Accordion type="single" collapsible defaultValue="basic" className="space-y-2">
+                  <AccordionItem value="basic" className="border rounded-xl px-4 border-b">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <Header icon={User2} title="Basic Details" subtitle="Primary contact information" filled={counts.basic} />
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5"><Label>Client Name</Label><Input value={form.name} onChange={(e) => updateD("name", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>Phone Number</Label><Input value={form.phone} onChange={(e) => updateD("phone", e.target.value)} /></div>
+                        <div className="space-y-1.5 md:col-span-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => updateD("email", e.target.value)} /></div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="business" className="border rounded-xl px-4 border-b">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <Header icon={Building2} title="Business Details" subtitle="Business profile and location" filled={counts.business} />
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5"><Label>Business Name</Label><Input value={form.business} onChange={(e) => updateD("business", e.target.value)} /></div>
+                        <div className="space-y-1.5">
+                          <Label>Business Type</Label>
+                          <Select value={form.businessType || undefined} onValueChange={(v) => updateD("businessType", v)}>
+                            <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                            <SelectContent>{BUSINESS_TYPES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5 md:col-span-2"><Label>Outlet Address</Label><Input value={form.outletAddress} onChange={(e) => updateD("outletAddress", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>City</Label><Input value={form.city} onChange={(e) => updateD("city", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>State</Label><Input value={form.state} onChange={(e) => updateD("state", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>Pincode</Label><Input value={form.pincode} onChange={(e) => updateD("pincode", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>Google Maps Location</Label><Input value={form.mapsLocation} onChange={(e) => updateD("mapsLocation", e.target.value)} placeholder="Paste maps URL" /></div>
+                        <div className="space-y-1.5"><Label>Number of Outlets</Label><Input type="number" min="1" value={form.outletsCount} onChange={(e) => updateD("outletsCount", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>Number of Staff</Label><Input type="number" min="1" value={form.staffCount} onChange={(e) => updateD("staffCount", e.target.value)} /></div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="operational" className="border rounded-xl px-4 border-b">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <Header icon={Settings2} title="Operational Details" subtitle="Current tools and business operations" filled={counts.operational} />
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5"><Label>Current Platform Using</Label><Input value={form.currentPlatform} onChange={(e) => updateD("currentPlatform", e.target.value)} placeholder="Petpooja, Posist…" /></div>
+                        <div className="space-y-1.5"><Label>Existing Loyalty System</Label><Input value={form.existingLoyalty} onChange={(e) => updateD("existingLoyalty", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>WhatsApp Marketing Using</Label><Input value={form.whatsappMarketing} onChange={(e) => updateD("whatsappMarketing", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>Monthly Customer Volume</Label><Input value={form.monthlyCustomers} onChange={(e) => updateD("monthlyCustomers", e.target.value)} /></div>
+                        <div className="space-y-1.5 md:col-span-2"><Label>Approx Revenue Range</Label><Input value={form.revenueRange} onChange={(e) => updateD("revenueRange", e.target.value)} placeholder="e.g. ₹5L–₹10L / month" /></div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="qualification" className="border rounded-xl px-4 border-b">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <Header icon={Target} title="Sales Qualification" subtitle="Lead quality and buying intent" filled={counts.qualification} />
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label>Lead Potential</Label>
+                          <Select value={form.potential || undefined} onValueChange={(v) => updateD("potential", v)}>
+                            <SelectTrigger><SelectValue placeholder="Select potential" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="High">High</SelectItem>
+                              <SelectItem value="Medium">Medium</SelectItem>
+                              <SelectItem value="Cold">Cold</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5"><Label>Budget Range</Label><Input value={form.budgetRange} onChange={(e) => updateD("budgetRange", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>Decision Maker Name</Label><Input value={form.decisionMaker} onChange={(e) => updateD("decisionMaker", e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label>Decision Maker Role</Label><Input value={form.decisionMakerRole} onChange={(e) => updateD("decisionMakerRole", e.target.value)} placeholder="Owner, Manager…" /></div>
+                        <div className="md:col-span-2 space-y-2">
+                          <Label>Interested Features</Label>
+                          <div className="flex flex-wrap gap-x-5 gap-y-2">
+                            {[
+                              ["loyalty", "Loyalty"],
+                              ["wheel", "Wheel"],
+                              ["reviews", "Reviews"],
+                              ["whatsapp", "WhatsApp Campaign"],
+                              ["fullSuite", "Full Suite"],
+                            ].map(([k, label]) => (
+                              <label key={k} className="flex items-center gap-2 text-sm cursor-pointer">
+                                <Checkbox
+                                  checked={(form.features as any)[k]}
+                                  onCheckedChange={(v) => updateD("features", { ...form.features, [k]: !!v })}
+                                />
+                                {label}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="notes" className="border rounded-xl px-4 border-b">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <Header icon={MessagesSquare} title="Discussion & Notes" subtitle="Conversation history and internal notes" filled={counts.notes} />
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-1.5"><Label>Client Discussion Notes</Label><Textarea rows={2} value={form.clientNotes} onChange={(e) => updateD("clientNotes", e.target.value)} /></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5"><Label>Admin Comments</Label><Textarea rows={2} value={form.adminComments} onChange={(e) => updateD("adminComments", e.target.value)} /></div>
+                          <div className="space-y-1.5"><Label>Objections</Label><Textarea rows={2} value={form.objections} onChange={(e) => updateD("objections", e.target.value)} /></div>
+                        </div>
+                        <div className="space-y-1.5"><Label>Internal Notes</Label><Textarea rows={2} value={form.internalNotes} onChange={(e) => updateD("internalNotes", e.target.value)} /></div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="status" className="border rounded-xl px-4 border-b">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <Header icon={Activity} title="Status Management" subtitle="Lead pipeline and follow-up tracking" filled={counts.status} />
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label>Main Status</Label>
+                          <Select value={form.status} onValueChange={(v) => updateD("status", v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Substatus</Label>
+                          <Select value={form.substatus || undefined} onValueChange={(v) => updateD("substatus", v)}>
+                            <SelectTrigger><SelectValue placeholder="Select substatus" /></SelectTrigger>
+                            <SelectContent>{subOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5"><Label>Follow-up Date</Label><Input type="date" value={form.nextFollowUp} onChange={(e) => updateD("nextFollowUp", e.target.value)} /></div>
+                        <div className="space-y-1.5">
+                          <Label>Assigned Sales Person</Label>
+                          <Select value={form.assignedTo} onValueChange={(v) => updateD("assignedTo", v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{SALES_PEOPLE.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Lead Source</Label>
+                          <Select value={form.source} onValueChange={(v) => updateD("source", v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="visit" className="border rounded-xl px-4 border-b">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <Header icon={MapPin} title="Visit Details" subtitle="Field visit scheduling and updates" filled={counts.visit} />
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Checkbox id="vr" checked={form.visitRequired} onCheckedChange={(v) => updateD("visitRequired", !!v)} />
+                        <Label htmlFor="vr" className="cursor-pointer">Visit Required</Label>
+                      </div>
+                      {form.visitRequired && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label>Visit Type</Label>
+                            <Select value={form.visitType} onValueChange={(v) => updateD("visitType", v)}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>{VISIT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label>Assigned Sales Rep</Label>
+                            <Select value={form.visitAssignedTo} onValueChange={(v) => updateD("visitAssignedTo", v)}>
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>{SALES_PEOPLE.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5"><Label>Visit Date</Label><Input type="date" value={form.visitDate} onChange={(e) => updateD("visitDate", e.target.value)} /></div>
+                          <div className="space-y-1.5"><Label>Visit Time</Label><Input type="time" value={form.visitTime} onChange={(e) => updateD("visitTime", e.target.value)} /></div>
+                          <div className="space-y-1.5 md:col-span-2"><Label>Visit Notes</Label><Textarea rows={2} value={form.visitNotes} onChange={(e) => updateD("visitNotes", e.target.value)} /></div>
+                        </div>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              );
+            })()}
           </div>
         )}
 
