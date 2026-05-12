@@ -8,7 +8,7 @@ export function ClientActivityMonitor() {
     .sort((a, b) => (tab === "active" ? b.activityScore - a.activityScore : a.activityScore - b.activityScore));
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className="rounded-xl border border-border bg-card p-5 h-full flex flex-col">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <h3 className="text-base font-semibold">Client Activity Monitor</h3>

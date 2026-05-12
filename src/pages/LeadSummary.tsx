@@ -45,17 +45,11 @@ export default function LeadSummary() {
         </div>
       </section>
 
-      {/* 4. Activity + Follow-ups */}
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-stretch">
-        <div className="xl:col-span-2 flex">
-          <div className="w-full"><ClientActivityMonitor /></div>
-        </div>
-        <div className="flex"><div className="w-full"><UpcomingFollowUps /></div></div>
-      </section>
-
-      {/* 5. Lead to Client Conversion Cycle */}
-      <section>
-        <ConversionCycleChart />
+      {/* 4. Activity + Follow-ups + Conversion (balanced grid) */}
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2 h-full"><ClientActivityMonitor /></div>
+        <div className="h-full"><UpcomingFollowUps /></div>
+        <div className="xl:col-span-3"><ConversionCycleChart /></div>
       </section>
     </div>
   );
