@@ -84,6 +84,13 @@ const TITLES: Record<RangeKey, string> = {
   today: "Today", month: "This Month", fy: "Financial Year", all: "All Time",
 };
 
+/** Target bar + % text: green above 80%, orange 40%–80%, red below 40%. */
+function targetProgressStatusColor(pct: number): string {
+  if (pct > 80) return "#10B981";
+  if (pct >= 40) return "#F97316";
+  return "#EF4444";
+}
+
 // ---- Graph datasets ----
 const TODAY_GRAPH = ["9a","11a","1p","3p","5p","7p"].map((h, i) => ({
   label: h, leads: [2,3,4,5,6,8][i], visits: [1,2,2,3,4,5][i], demo: [0,1,2,3,3,4][i],
@@ -115,44 +122,70 @@ const ALL_GRAPH = [
 function FunnelCard({ card }: { card: Card }) {
   const s = STAGES[card.stage];
   const Icon = s.icon;
+  const pct = card.pct;
+  const progressTint = pct !== undefined && !card.noProgress ? targetProgressStatusColor(pct) : undefined;
+
   return (
     <div
-      className="rounded-2xl border p-3.5 flex flex-col gap-2.5 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)]"
+      className="rounded-2xl border px-3.5 pt-4 pb-3 flex flex-col gap-3 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)]"
       style={{
         background: `linear-gradient(160deg, ${s.bg} 0%, rgba(255,255,255,0.55) 100%)`,
         borderColor: s.border,
       }}
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: s.accent }}>{s.label}</div>
-          <div className="text-[20px] leading-tight font-bold tracking-tight text-foreground mt-0.5 truncate">{card.main}</div>
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="min-w-0 font-sans">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[#374151] leading-snug">
+            {s.label}
+          </div>
+          <div className="text-xl font-[650] leading-tight tracking-[-0.025em] text-[#111827] tabular-nums mt-1 truncate">
+            {card.main}
+          </div>
         </div>
-        <div className="h-7 w-7 rounded-lg grid place-items-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>
+        <div className="h-7 w-7 rounded-lg grid place-items-center shrink-0" style={{ background: s.iconBg, color: "#374151" }}>
           <Icon className="h-3.5 w-3.5" />
         </div>
       </div>
 
       {/* Subs */}
-      <div className="space-y-1">
+      <div className="space-y-1.5 font-sans">
         {card.subs.map((sub) => (
-          <div key={sub.label} className="flex items-center justify-between text-[11px]">
-            <span className="text-muted-foreground">{sub.label}</span>
-            <span className="font-semibold text-foreground tabular-nums">{sub.value}</span>
+          <div
+            key={sub.label}
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 text-[12px] leading-[1.45]"
+          >
+            <span className="min-w-0 font-[525] text-[#4B5563]">{sub.label}</span>
+            <span className="shrink-0 text-right font-semibold tabular-nums text-[#374151]">
+              {sub.value}
+            </span>
           </div>
         ))}
       </div>
 
       {/* Progress (skip for lost) */}
-      {!card.noProgress && card.pct !== undefined && (
-        <div className="mt-auto pt-1">
-          <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: `${s.progress}22` }}>
-            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${card.pct}%`, background: s.progress }} />
+      {!card.noProgress && pct !== undefined && progressTint && (
+        <div className="mt-auto pt-2 font-sans">
+          <div
+            className="h-1 w-full overflow-hidden rounded-full bg-slate-900/[0.08]"
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${pct}%`, backgroundColor: progressTint }}
+            />
           </div>
-          <div className="flex items-center justify-between mt-1 text-[10px]">
-            <span className="text-muted-foreground">Target {card.target}</span>
-            <span className="font-bold" style={{ color: s.accent }}>{card.pct}%</span>
+          <div className="mt-1.5 flex items-center justify-between gap-2 leading-[1.45] tabular-nums">
+            <span className="min-w-0 text-[10px] font-normal text-[#6B7280]">Target {card.target}</span>
+            <span
+              className="shrink-0 text-right text-[11px] font-semibold"
+              style={{ color: progressTint }}
+            >
+              {pct}%
+            </span>
           </div>
         </div>
       )}
@@ -209,7 +242,9 @@ export function SalesFunnelOverview() {
           {(["today","month","fy","all"] as RangeKey[]).map((rk) => (
             <div key={rk}>
               <div className="flex items-center gap-2 mb-2.5">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-primary">{TITLES[rk]}</h3>
+                <h3 className="text-[15px] font-normal tracking-tight text-[#9A3412] leading-snug">
+                  {TITLES[rk]}
+                </h3>
                 {rk === "month" && (
                   <Select value={month} onValueChange={setMonth}>
                     <SelectTrigger className="h-6 w-[110px] bg-background/70 backdrop-blur text-xs"><SelectValue /></SelectTrigger>

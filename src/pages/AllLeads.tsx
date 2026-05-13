@@ -17,10 +17,11 @@ import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { StatusUpdateDialog } from "@/components/leads/StatusUpdateDialog";
 import { ScheduleVisitDialog } from "@/components/leads/ScheduleVisitDialog";
 import { LeadTimeline } from "@/components/leads/LeadTimeline";
-import { MetricCard } from "@/components/dashboard/MetricCard";
+import { cn } from "@/lib/utils";
+import { MetricCard, GLASS_SURFACES } from "@/components/dashboard/MetricCard";
 import { DateFilter, DateRange } from "@/components/dashboard/DateFilter";
 import {
-  TrendingUp, TrendingDown, Clock, CalendarCheck, Monitor, Check, X,
+  Clock, CalendarCheck, Monitor, Check, X,
   ListChecks, AlertCircle, CheckCheck
 } from "lucide-react";
 
@@ -183,7 +184,7 @@ export default function AllLeads() {
       {/* Overview cards */}
       <section>
         <div className="flex items-center justify-between mb-2">
-          <div className="section-label !mb-0">Leads Overview</div>
+          <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-primary/75 !mb-0">Leads Overview</div>
           {cardFilter && (
             <button onClick={() => setCardFilter(null)} className="text-xs text-primary hover:underline">Clear card filter</button>
           )}
@@ -192,63 +193,79 @@ export default function AllLeads() {
           <button
             type="button"
             onClick={() => toggleCard("total")}
-            className={`w-full text-left rounded-xl border p-4 transition-all hover:shadow-[var(--shadow-card)] cursor-pointer hover:-translate-y-0.5 hover:border-primary/40 active:translate-y-0 border-primary/20 bg-soft-gradient ${cardFilter === "total" ? "ring-2 ring-primary border-primary shadow-[var(--shadow-card)]" : ""}`}
+            className={cn(
+              "w-full text-left rounded-2xl border p-4 backdrop-blur-sm transition-all cursor-pointer min-h-[7rem] flex flex-col hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] active:translate-y-0",
+              cardFilter === "total" && "ring-2 ring-primary shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
+            )}
+            style={{
+              background: GLASS_SURFACES.peach.bg,
+              borderColor: GLASS_SURFACES.peach.border,
+            }}
           >
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-2 flex-1 min-h-0">
               <div className="min-w-0">
-                <div className="text-2xl font-bold tracking-tight text-foreground">{total}</div>
-                <div className="text-sm font-medium text-foreground mt-1 truncate">Total Leads</div>
+                <div className="text-sm font-medium text-foreground leading-snug truncate">Total Leads</div>
+                <div className="text-2xl font-bold tracking-tight text-foreground tabular-nums mt-1">{total}</div>
               </div>
-              <div className="h-8 w-8 rounded-lg grid place-items-center shrink-0 bg-primary/10 text-primary">
+              <div
+                className="h-8 w-8 rounded-full grid place-items-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+                style={{ background: GLASS_SURFACES.peach.iconBg, color: "#374151" }}
+              >
                 <Users className="h-4 w-4" />
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-primary/15 flex items-center gap-4">
+            <div className="mt-3 pt-3 border-t border-foreground/10 flex items-center gap-4">
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); toggleCard("high"); }}
-                className={`flex items-baseline gap-1.5 text-xs hover:underline ${cardFilter === "high" ? "text-primary font-semibold" : "text-muted-foreground"}`}
+                className={cn(
+                  "flex items-baseline gap-1.5 text-xs hover:underline",
+                  cardFilter === "high" ? "text-primary font-medium" : "text-[#4B5563]"
+                )}
               >
-                <span className="text-sm font-semibold text-foreground">{high}</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">{high}</span>
                 <span>Hot Leads</span>
               </button>
-              <span className="h-3 w-px bg-border" />
+              <span className="h-3 w-px bg-foreground/15" />
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); toggleCard("low"); }}
-                className={`flex items-baseline gap-1.5 text-xs hover:underline ${cardFilter === "low" ? "text-primary font-semibold" : "text-muted-foreground"}`}
+                className={cn(
+                  "flex items-baseline gap-1.5 text-xs hover:underline",
+                  cardFilter === "low" ? "text-primary font-medium" : "text-[#4B5563]"
+                )}
               >
-                <span className="text-sm font-semibold text-foreground">{low}</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">{low}</span>
                 <span>Cold Leads</span>
               </button>
             </div>
           </button>
-          <MetricCard icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" onClick={() => toggleCard("cold")} active={cardFilter === "cold"} />
-          <MetricCard icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" onClick={() => toggleCard("demo-sched")} active={cardFilter === "demo-sched"} />
-          <MetricCard icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" onClick={() => toggleCard("demo-done")} active={cardFilter === "demo-done"} />
-          <MetricCard icon={Check} value={converted} label="Sale Done" sublabel="Closed won" onClick={() => toggleCard("sale-done")} active={cardFilter === "sale-done"} />
-          <MetricCard icon={X} value={lost} label="Closed - Dead" sublabel="Closed lost" onClick={() => toggleCard("lost")} active={cardFilter === "lost"} />
+          <MetricCard glassSurface="amber" icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" onClick={() => toggleCard("cold")} active={cardFilter === "cold"} />
+          <MetricCard glassSurface="sky" icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" onClick={() => toggleCard("demo-sched")} active={cardFilter === "demo-sched"} />
+          <MetricCard glassSurface="indigo" icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" onClick={() => toggleCard("demo-done")} active={cardFilter === "demo-done"} />
+          <MetricCard glassSurface="mint" icon={Check} value={converted} label="Sale Done" sublabel="Closed won" onClick={() => toggleCard("sale-done")} active={cardFilter === "sale-done"} />
+          <MetricCard glassSurface="rose" icon={X} value={lost} label="Closed - Dead" sublabel="Closed lost" onClick={() => toggleCard("lost")} active={cardFilter === "lost"} />
         </div>
       </section>
 
       <section>
-        <div className="section-label">Follow-ups</div>
+        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-primary/75 mb-2">Follow-ups</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" onClick={() => toggleCard("fu-total")} active={cardFilter === "fu-total"} />
-          <MetricCard variant="soft" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" onClick={() => toggleCard("fu-today")} active={cardFilter === "fu-today"} />
-          <MetricCard variant="danger" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" onClick={() => toggleCard("fu-missed")} active={cardFilter === "fu-missed"} />
-          <MetricCard icon={CheckCheck} value={completedFu} label="Completed Today" sublabel="Today" onClick={() => toggleCard("fu-completed")} active={cardFilter === "fu-completed"} />
+          <MetricCard glassSurface="apricot" icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" onClick={() => toggleCard("fu-total")} active={cardFilter === "fu-total"} />
+          <MetricCard glassSurface="gold" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" onClick={() => toggleCard("fu-today")} active={cardFilter === "fu-today"} />
+          <MetricCard glassSurface="rose" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" onClick={() => toggleCard("fu-missed")} active={cardFilter === "fu-missed"} />
+          <MetricCard glassSurface="mint" icon={CheckCheck} value={completedFu} label="Completed Today" sublabel="Today" onClick={() => toggleCard("fu-completed")} active={cardFilter === "fu-completed"} />
         </div>
       </section>
 
       {/* Visits Summary */}
       <section>
-        <div className="section-label">Visits</div>
+        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-primary/75 mb-2">Visits</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard variant="soft" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" onClick={() => toggleCard("v-today")} active={cardFilter === "v-today"} />
-          <MetricCard icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" onClick={() => toggleCard("v-scheduled-today")} active={cardFilter === "v-scheduled-today"} />
-          <MetricCard icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" onClick={() => toggleCard("v-completed-today")} active={cardFilter === "v-completed-today"} />
-          <MetricCard variant="danger" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" onClick={() => toggleCard("v-missed")} active={cardFilter === "v-missed"} />
+          <MetricCard glassSurface="sky" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" onClick={() => toggleCard("v-today")} active={cardFilter === "v-today"} />
+          <MetricCard glassSurface="cerulean" icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" onClick={() => toggleCard("v-scheduled-today")} active={cardFilter === "v-scheduled-today"} />
+          <MetricCard glassSurface="mint" icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" onClick={() => toggleCard("v-completed-today")} active={cardFilter === "v-completed-today"} />
+          <MetricCard glassSurface="rose" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" onClick={() => toggleCard("v-missed")} active={cardFilter === "v-missed"} />
         </div>
       </section>
 

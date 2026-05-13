@@ -25,11 +25,18 @@ export default function LeadSummary() {
       <ActiveClientCycle />
 
       {/* 3. Product Metrics */}
-      <section>
-        <div className="flex items-center justify-between mb-2">
-          <div className="section-label !mb-0">Product Metrics</div>
+      <section
+        className="rounded-2xl border p-5 backdrop-blur-md"
+        style={{
+          background: "linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,250,255,0.5) 100%)",
+          borderColor: "hsl(var(--border))",
+          boxShadow: "0 4px 24px -16px rgba(0,0,0,0.08)",
+        }}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="section-label !mb-0 !text-foreground">Product Metrics</div>
           <Select defaultValue="this-month">
-            <SelectTrigger className="h-7 w-[140px] bg-background/70 backdrop-blur text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 w-[140px] bg-background/70 backdrop-blur text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="this-week">This Week</SelectItem>
@@ -39,9 +46,9 @@ export default function LeadSummary() {
           </Select>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 auto-rows-fr">
-          <MetricCard variant="soft" icon={Store} value={42} label="Total Outlets" sublabel="Across all clients" />
-          <MetricCard variant="soft" icon={CircleDot} value={28} label="Total Wheels" sublabel="Active campaigns" />
-          <MetricCard variant="soft" icon={Gift} value="3.2K" label="Total Loyalty Cards" sublabel="Issued" />
+          <MetricCard layeredGlass layeredTone={0} icon={Store} value={42} label="Total Outlets" sublabel="Across all clients" />
+          <MetricCard layeredGlass layeredTone={1} icon={CircleDot} value={28} label="Total Wheels" sublabel="Active campaigns" />
+          <MetricCard layeredGlass layeredTone={2} icon={Gift} value="3.2K" label="Total Loyalty Cards" sublabel="Issued" />
         </div>
       </section>
 
