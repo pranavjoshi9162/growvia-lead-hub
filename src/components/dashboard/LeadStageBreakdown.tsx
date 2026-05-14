@@ -3,7 +3,7 @@ import { Megaphone, PhoneCall, Monitor, Hourglass, CheckCircle2 } from "lucide-r
 const stages = [
   { label: "Leads", value: 100, icon: Megaphone },
   { label: "Contacted", value: 70, icon: PhoneCall },
-  { label: "Demo Done", value: 35, icon: Monitor },
+  { label: "Demo completed", value: 35, icon: Monitor },
   { label: "Trial", value: 15, icon: Hourglass },
   { label: "Sale Done", value: 8, icon: CheckCircle2 },
 ];

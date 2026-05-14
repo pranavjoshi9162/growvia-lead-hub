@@ -17,8 +17,8 @@ export function ConversionCycleChart() {
       <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div className="flex items-center gap-2 flex-wrap">
           <div>
-            <h3 className="text-base font-semibold">Lead to Client Conversion Cycle</h3>
-            <p className="text-sm text-muted-foreground">How long leads take to convert into paid clients.</p>
+            <h3 className="text-base font-semibold">Lead to sale cycle</h3>
+            <p className="text-sm text-muted-foreground">How long leads take from inquiry to a closed sale.</p>
           </div>
           <Select value={range} onValueChange={setRange}>
             <SelectTrigger className="h-7 w-[130px] bg-background text-xs ml-2"><SelectValue /></SelectTrigger>

@@ -1,9 +1,11 @@
-import { useMemo, useState, Fragment, useEffect } from "react";
+import { useMemo, useState, Fragment, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format, isToday, isPast, isFuture } from "date-fns";
 import {
-  Search, Plus, ChevronDown, ChevronRight, MoreHorizontal, Edit, RefreshCcw,
-  CalendarPlus, CheckCircle2, XCircle, Users, MapPin
+  Search, Plus, ChevronDown, ChevronRight, MoreHorizontal, Edit,
+  CalendarPlus, CheckCircle2, XCircle, Users, MapPin,
+  Clock, CalendarCheck, Monitor, Check, X,
+  ListChecks, AlertCircle, CheckCheck,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useLeads } from "@/context/LeadsContext";
-import { LEAD_STATUSES, LeadStatus, SOURCES, SALES_PEOPLE, Lead } from "@/lib/sampleData";
+import { LEAD_STATUSES, LeadStatus, SOURCES, SALES_PEOPLE, Lead, leadStatusDisplay } from "@/lib/sampleData";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { StatusUpdateDialog } from "@/components/leads/StatusUpdateDialog";
 import { ScheduleVisitDialog } from "@/components/leads/ScheduleVisitDialog";
@@ -20,27 +22,22 @@ import { LeadTimeline } from "@/components/leads/LeadTimeline";
 import { cn } from "@/lib/utils";
 import { MetricCard, GLASS_SURFACES } from "@/components/dashboard/MetricCard";
 import { DateFilter, DateRange } from "@/components/dashboard/DateFilter";
-import {
-  Clock, CalendarCheck, Monitor, Check, X,
-  ListChecks, AlertCircle, CheckCheck
-} from "lucide-react";
 
 const statusColor: Record<LeadStatus, string> = {
-  "Cold Call": "bg-info-soft text-info border-info/30",
-  "Schedule Visit": "bg-warning-soft text-warning border-warning/30",
-  "Visit Done": "bg-warning-soft text-warning border-warning/30",
-  "Demo Schedule": "bg-primary/10 text-primary border-primary/30",
-  "Demo Done": "bg-primary/15 text-primary border-primary/30",
-  "In-Progress": "bg-warning-soft text-warning border-warning/30",
-  "Free Trial": "bg-success-soft text-success border-success/30",
-  "Sale Done": "bg-success-soft text-success border-success/30",
-  "Closed - Dead": "bg-destructive/10 text-destructive border-destructive/30",
+  "New Lead": "bg-info-soft text-info border-info/30",
+  Contacted: "bg-info-soft text-info border-info/30",
+  Visit: "bg-warning-soft text-warning border-warning/30",
+  Demo: "bg-primary/10 text-primary border-primary/30",
+  Negotiation: "bg-warning-soft text-warning border-warning/30",
+  Trial: "bg-success-soft text-success border-success/30",
+  Converted: "bg-success-soft text-success border-success/30",
+  Lost: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 const info = "bg-info-soft text-info border-info/30";
 
 export default function AllLeads() {
-  const { leads, updateLead, setStatus } = useLeads();
+  const { leads } = useLeads();
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("all");
   const [status, setStatusF] = useState("all");
@@ -51,24 +48,46 @@ export default function AllLeads() {
   type CardKey =
     | null
     | "total" | "high" | "low"
-    | "cold" | "demo-sched" | "demo-done" | "sale-done" | "lost"
+    | "fu-pending" | "demo-sched" | "demo-done" | "converted" | "lost"
     | "fu-total" | "fu-today" | "fu-missed" | "fu-completed"
-    | "v-today" | "v-scheduled-today" | "v-completed-today" | "v-missed";
+    | "v-today" | "v-scheduled-today" | "v-completed-today" | "v-missed"
+    | "d-scheduled" | "d-completed" | "d-rescheduled";
   const [cardFilter, setCardFilter] = useState<CardKey>(null);
   const [range, setRange] = useState<DateRange>("month");
 
-  const toggleCard = (k: CardKey) => setCardFilter((c) => (c === k ? null : k));
   const clearAll = () => {
     setSearch(""); setSource("all"); setStatusF("all"); setPotential("all");
     setAssigned("all"); setDueToday(false); setVisitFilter("all"); setCardFilter(null);
   };
 
   const [addOpen, setAddOpen] = useState(false);
-  const [statusDialog, setStatusDialog] = useState<{ open: boolean; lead: Lead | null; initial?: LeadStatus; title?: string }>({ open: false, lead: null });
+  const [editLead, setEditLead] = useState<Lead | null>(null);
+  const [statusDialog, setStatusDialog] = useState<{
+    open: boolean;
+    lead: Lead | null;
+    initial?: LeadStatus;
+    initialSubstatus?: string;
+    title?: string;
+  }>({ open: false, lead: null });
   const [visitDialog, setVisitDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const filterToolbarRef = useRef<HTMLDivElement>(null);
+
+  const scrollToLeadTableToolbar = () => {
+    queueMicrotask(() => {
+      filterToolbarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const applyCardFilter = (k: CardKey) => {
+    setCardFilter((prev) => {
+      const next = prev === k ? null : k;
+      if (next !== null) scrollToLeadTableToolbar();
+      return next;
+    });
+  };
 
   useEffect(() => {
     const f = searchParams.get("filter");
@@ -78,11 +97,11 @@ export default function AllLeads() {
       case "all": break;
       case "high": setPotential("High"); break;
       case "low": setPotential("Low"); break;
-      case "follow-up": setStatusF("Cold Call"); break;
-      case "demo-scheduled": setStatusF("Demo Schedule"); break;
-      case "demo-given": setStatusF("Demo Done"); break;
-      case "converted": setStatusF("Sale Done"); break;
-      case "lost": setStatusF("Closed - Dead"); break;
+      case "follow-up": setStatusF("Contacted"); break;
+      case "demo-scheduled": setStatusF("Demo"); break;
+      case "demo-given": setStatusF("Demo"); break;
+      case "converted": setStatusF("Converted"); break;
+      case "lost": setStatusF("Lost"); break;
     }
     const next = new URLSearchParams(searchParams);
     next.delete("filter");
@@ -121,11 +140,11 @@ export default function AllLeads() {
           case "total": break;
           case "high": if (l.potential !== "High") return false; break;
           case "low": if (l.potential !== "Low") return false; break;
-          case "cold": if (l.status !== "Cold Call") return false; break;
-          case "demo-sched": if (l.status !== "Demo Schedule") return false; break;
-          case "demo-done": if (l.status !== "Demo Done") return false; break;
-          case "sale-done": if (l.status !== "Sale Done") return false; break;
-          case "lost": if (l.status !== "Closed - Dead") return false; break;
+          case "fu-pending": if (l.substatus !== "Follow-up Pending") return false; break;
+          case "demo-sched": if (l.status !== "Demo" || l.substatus !== "Demo Scheduled") return false; break;
+          case "demo-done": if (l.status !== "Demo" || l.substatus !== "Demo Completed") return false; break;
+          case "converted": if (l.status !== "Converted") return false; break;
+          case "lost": if (l.status !== "Lost") return false; break;
           case "fu-total": if (!fuDate) return false; break;
           case "fu-today": if (!fuDate || !isToday(fuDate)) return false; break;
           case "fu-missed": if (!fuDate || fuDate >= today0) return false; break;
@@ -134,6 +153,9 @@ export default function AllLeads() {
           case "v-scheduled-today": if (!visits.some((v) => isToday(new Date(v.date)) && v.status === "Scheduled")) return false; break;
           case "v-completed-today": if (!visits.some((v) => isToday(new Date(v.date)) && v.status === "Completed")) return false; break;
           case "v-missed": if (!visits.some((v) => v.status === "Missed" || (isPast(new Date(v.date)) && !isToday(new Date(v.date)) && v.status === "Scheduled"))) return false; break;
+          case "d-scheduled": if (l.status !== "Demo" || l.substatus !== "Demo Scheduled") return false; break;
+          case "d-completed": if (l.status !== "Demo" || l.substatus !== "Demo Completed") return false; break;
+          case "d-rescheduled": if (l.status !== "Demo" || l.substatus !== "Demo Rescheduled") return false; break;
         }
       }
       return true;
@@ -144,11 +166,11 @@ export default function AllLeads() {
   const total = leads.length;
   const high = leads.filter((l) => l.potential === "High").length;
   const low = leads.filter((l) => l.potential === "Low").length;
-  const followUp = leads.filter((l) => l.status === "Cold Call").length;
-  const demoSched = leads.filter((l) => l.status === "Demo Schedule").length;
-  const demoGiven = leads.filter((l) => l.status === "Demo Done").length;
-  const converted = leads.filter((l) => l.status === "Sale Done").length;
-  const lost = leads.filter((l) => l.status === "Closed - Dead").length;
+  const followUpPending = leads.filter((l) => l.substatus === "Follow-up Pending").length;
+  const demoSched = leads.filter((l) => l.status === "Demo" && l.substatus === "Demo Scheduled").length;
+  const demoGiven = leads.filter((l) => l.status === "Demo" && l.substatus === "Demo Completed").length;
+  const converted = leads.filter((l) => l.status === "Converted").length;
+  const lost = leads.filter((l) => l.status === "Lost").length;
 
   const totalFu = leads.filter((l) => l.nextFollowUp).length;
   const todayFu = leads.filter((l) => l.nextFollowUp && isToday(new Date(l.nextFollowUp))).length;
@@ -161,6 +183,10 @@ export default function AllLeads() {
   const scheduledToday = visitsToday.filter(({ v }) => v.status === "Scheduled" || v.status === "Checked In").length;
   const completedToday = visitsToday.filter(({ v }) => v.status === "Completed").length;
   const missedVisits = allVisits.filter(({ v }) => v.status === "Missed" || (isPast(new Date(v.date)) && !isToday(new Date(v.date)) && v.status === "Scheduled")).length;
+
+  const demoPipeScheduled = leads.filter((l) => l.status === "Demo" && l.substatus === "Demo Scheduled").length;
+  const demoPipeCompleted = leads.filter((l) => l.status === "Demo" && l.substatus === "Demo Completed").length;
+  const demoPipeRescheduled = leads.filter((l) => l.status === "Demo" && l.substatus === "Demo Rescheduled").length;
 
   const nextVisit = (l: Lead) => {
     const upcoming = (l.visits ?? [])
@@ -192,7 +218,7 @@ export default function AllLeads() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             type="button"
-            onClick={() => toggleCard("total")}
+            onClick={() => applyCardFilter("total")}
             className={cn(
               "w-full text-left rounded-2xl border p-4 backdrop-blur-sm transition-all cursor-pointer min-h-[7rem] flex flex-col hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] active:translate-y-0",
               cardFilter === "total" && "ring-2 ring-primary shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)]"
@@ -217,7 +243,7 @@ export default function AllLeads() {
             <div className="mt-3 pt-3 border-t border-foreground/10 flex items-center gap-4">
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); toggleCard("high"); }}
+                onClick={(e) => { e.stopPropagation(); applyCardFilter("high"); }}
                 className={cn(
                   "flex items-baseline gap-1.5 text-xs hover:underline",
                   cardFilter === "high" ? "text-primary font-medium" : "text-[#4B5563]"
@@ -229,7 +255,7 @@ export default function AllLeads() {
               <span className="h-3 w-px bg-foreground/15" />
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); toggleCard("low"); }}
+                onClick={(e) => { e.stopPropagation(); applyCardFilter("low"); }}
                 className={cn(
                   "flex items-baseline gap-1.5 text-xs hover:underline",
                   cardFilter === "low" ? "text-primary font-medium" : "text-[#4B5563]"
@@ -240,21 +266,21 @@ export default function AllLeads() {
               </button>
             </div>
           </button>
-          <MetricCard glassSurface="amber" icon={Clock} value={followUp} label="Cold Call" sublabel="In progress" onClick={() => toggleCard("cold")} active={cardFilter === "cold"} />
-          <MetricCard glassSurface="sky" icon={CalendarCheck} value={demoSched} label="Demo Schedule" sublabel="This month" onClick={() => toggleCard("demo-sched")} active={cardFilter === "demo-sched"} />
-          <MetricCard glassSurface="indigo" icon={Monitor} value={demoGiven} label="Demo Done" sublabel="This month" onClick={() => toggleCard("demo-done")} active={cardFilter === "demo-done"} />
-          <MetricCard glassSurface="mint" icon={Check} value={converted} label="Sale Done" sublabel="Closed won" onClick={() => toggleCard("sale-done")} active={cardFilter === "sale-done"} />
-          <MetricCard glassSurface="rose" icon={X} value={lost} label="Closed - Dead" sublabel="Closed lost" onClick={() => toggleCard("lost")} active={cardFilter === "lost"} />
+          <MetricCard glassSurface="amber" icon={Clock} value={followUpPending} label="Follow-up Pending" sublabel="Across pipeline" onClick={() => applyCardFilter("fu-pending")} active={cardFilter === "fu-pending"} />
+          <MetricCard glassSurface="sky" icon={CalendarCheck} value={demoSched} label="Demo Scheduled" sublabel="Pipeline" onClick={() => applyCardFilter("demo-sched")} active={cardFilter === "demo-sched"} />
+          <MetricCard glassSurface="indigo" icon={Monitor} value={demoGiven} label="Demo Completed" sublabel="Pipeline" onClick={() => applyCardFilter("demo-done")} active={cardFilter === "demo-done"} />
+          <MetricCard glassSurface="mint" icon={Check} value={converted} label="Sale Done" sublabel="Closed won" onClick={() => applyCardFilter("converted")} active={cardFilter === "converted"} />
+          <MetricCard glassSurface="rose" icon={X} value={lost} label="Lost" sublabel="Closed lost" onClick={() => applyCardFilter("lost")} active={cardFilter === "lost"} />
         </div>
       </section>
 
       <section>
         <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-primary/75 mb-2">Follow-ups</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard glassSurface="apricot" icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" onClick={() => toggleCard("fu-total")} active={cardFilter === "fu-total"} />
-          <MetricCard glassSurface="gold" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" onClick={() => toggleCard("fu-today")} active={cardFilter === "fu-today"} />
-          <MetricCard glassSurface="rose" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" onClick={() => toggleCard("fu-missed")} active={cardFilter === "fu-missed"} />
-          <MetricCard glassSurface="mint" icon={CheckCheck} value={completedFu} label="Completed Today" sublabel="Today" onClick={() => toggleCard("fu-completed")} active={cardFilter === "fu-completed"} />
+          <MetricCard glassSurface="apricot" icon={ListChecks} value={totalFu} label="Total Follow-ups" sublabel="Open" onClick={() => applyCardFilter("fu-total")} active={cardFilter === "fu-total"} />
+          <MetricCard glassSurface="gold" icon={CalendarCheck} value={todayFu} label="Today's Follow-ups" sublabel="Due today" onClick={() => applyCardFilter("fu-today")} active={cardFilter === "fu-today"} />
+          <MetricCard glassSurface="rose" icon={AlertCircle} value={missedFu} label="Missed Follow-ups" sublabel="Action needed" onClick={() => applyCardFilter("fu-missed")} active={cardFilter === "fu-missed"} />
+          <MetricCard glassSurface="mint" icon={CheckCheck} value={completedFu} label="Completed Today" sublabel="Today" onClick={() => applyCardFilter("fu-completed")} active={cardFilter === "fu-completed"} />
         </div>
       </section>
 
@@ -262,15 +288,25 @@ export default function AllLeads() {
       <section>
         <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-primary/75 mb-2">Visits</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard glassSurface="sky" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" onClick={() => toggleCard("v-today")} active={cardFilter === "v-today"} />
-          <MetricCard glassSurface="cerulean" icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" onClick={() => toggleCard("v-scheduled-today")} active={cardFilter === "v-scheduled-today"} />
-          <MetricCard glassSurface="mint" icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" onClick={() => toggleCard("v-completed-today")} active={cardFilter === "v-completed-today"} />
-          <MetricCard glassSurface="rose" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" onClick={() => toggleCard("v-missed")} active={cardFilter === "v-missed"} />
+          <MetricCard glassSurface="sky" icon={MapPin} value={visitsToday.length} label="Visits Today" sublabel="All visits" onClick={() => applyCardFilter("v-today")} active={cardFilter === "v-today"} />
+          <MetricCard glassSurface="cerulean" icon={CalendarCheck} value={scheduledToday} label="Scheduled Today" sublabel="Pending" onClick={() => applyCardFilter("v-scheduled-today")} active={cardFilter === "v-scheduled-today"} />
+          <MetricCard glassSurface="mint" icon={CheckCheck} value={completedToday} label="Completed Today" sublabel="Done" onClick={() => applyCardFilter("v-completed-today")} active={cardFilter === "v-completed-today"} />
+          <MetricCard glassSurface="rose" icon={AlertCircle} value={missedVisits} label="Missed Visits" sublabel="Overdue" onClick={() => applyCardFilter("v-missed")} active={cardFilter === "v-missed"} />
+        </div>
+      </section>
+
+      {/* Demos (pipeline substatus) */}
+      <section>
+        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-primary/75 mb-2">Demos</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard glassSurface="sky" icon={Monitor} value={demoPipeScheduled} label="Scheduled" sublabel="Main status · Demo" onClick={() => applyCardFilter("d-scheduled")} active={cardFilter === "d-scheduled"} />
+          <MetricCard glassSurface="mint" icon={CheckCheck} value={demoPipeCompleted} label="Completed" sublabel="Main status · Demo" onClick={() => applyCardFilter("d-completed")} active={cardFilter === "d-completed"} />
+          <MetricCard glassSurface="cerulean" icon={CalendarCheck} value={demoPipeRescheduled} label="Rescheduled" sublabel="Main status · Demo" onClick={() => applyCardFilter("d-rescheduled")} active={cardFilter === "d-rescheduled"} />
         </div>
       </section>
 
       {/* Filters */}
-      <div className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center gap-2">
+      <div ref={filterToolbarRef} className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center gap-2 scroll-mt-[5.5rem]">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Search leads, business, phone..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -286,7 +322,11 @@ export default function AllLeads() {
           <SelectTrigger className="w-[170px]"><SelectValue placeholder="All Statuses" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            {LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {LEAD_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {leadStatusDisplay(s)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={potential} onValueChange={setPotential}>
@@ -386,7 +426,7 @@ export default function AllLeads() {
                       <td className="py-3 pr-4"><Badge variant="outline" className={info}>{l.source}</Badge></td>
                       <td className="py-3 pr-4">
                         <div className="flex flex-col gap-1">
-                          <Badge variant="outline" className={statusColor[l.status]}>{l.status}</Badge>
+                          <Badge variant="outline" className={statusColor[l.status]}>{leadStatusDisplay(l.status)}</Badge>
                           {l.substatus && <span className="text-[11px] text-muted-foreground">{l.substatus}</span>}
                         </div>
                       </td>
@@ -412,37 +452,72 @@ export default function AllLeads() {
                       <td className="py-3 pr-4">{l.assignedTo}</td>
                       <td className="py-3 pr-4">
                         <div className="flex items-center justify-end gap-1">
-                          <Button size="sm" variant="outline" className="h-8"
-                            onClick={() => setStatusDialog({ open: true, lead: l, title: "Add Status Update" })}>
-                            Status Update
-                          </Button>
-                          <Button size="sm" variant="outline" className="h-8 gap-1"
-                            onClick={() => setVisitDialog({ open: true, lead: l })}>
-                            <MapPin className="h-3.5 w-3.5" /> Visit
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8"
+                            onClick={() =>
+                              setStatusDialog({ open: true, lead: l, title: "Change Status" })
+                            }
+                          >
+                            Change Status
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 bg-popover">
-                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, title: "Edit Lead" })}>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditLead(l);
+                                }}
+                              >
                                 <Edit className="h-4 w-4 mr-2" /> Edit Lead
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, title: "Update Status" })}>
-                                <RefreshCcw className="h-4 w-4 mr-2" /> Update Status
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setVisitDialog({ open: true, lead: l })}>
                                 <MapPin className="h-4 w-4 mr-2" /> Schedule Visit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Cold Call", title: "Schedule Follow-up" })}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setStatusDialog({
+                                    open: true,
+                                    lead: l,
+                                    initial: "Contacted",
+                                    initialSubstatus: "Follow-up Pending",
+                                    title: "Schedule Follow-up",
+                                  })
+                                }
+                              >
                                 <CalendarPlus className="h-4 w-4 mr-2" /> Schedule Follow-up
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Sale Done", title: "Mark Sale Done" })}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setStatusDialog({
+                                    open: true,
+                                    lead: l,
+                                    initial: "Converted",
+                                    initialSubstatus: "Monthly Plan",
+                                    title: "Mark Sale Done",
+                                  })
+                                }
+                              >
                                 <CheckCircle2 className="h-4 w-4 mr-2 text-success" /> Mark Sale Done
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setStatusDialog({ open: true, lead: l, initial: "Closed - Dead", title: "Mark Closed - Dead" })}>
-                                <XCircle className="h-4 w-4 mr-2 text-destructive" /> Mark Closed - Dead
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setStatusDialog({
+                                    open: true,
+                                    lead: l,
+                                    initial: "Lost",
+                                    initialSubstatus: "Not Interested",
+                                    title: "Mark Lost",
+                                  })
+                                }
+                              >
+                                <XCircle className="h-4 w-4 mr-2 text-destructive" /> Mark Lost
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -507,12 +582,24 @@ export default function AllLeads() {
         </div>
       </div>
 
-      <AddLeadDialog open={addOpen} onOpenChange={setAddOpen} />
+      <AddLeadDialog
+        open={addOpen || editLead !== null}
+        onOpenChange={(v) => {
+          if (!v) {
+            setAddOpen(false);
+            setEditLead(null);
+          }
+        }}
+        editingLead={editLead}
+      />
       <StatusUpdateDialog
         open={statusDialog.open}
-        onOpenChange={(v) => setStatusDialog((s) => ({ ...s, open: v }))}
+        onOpenChange={(v) =>
+          setStatusDialog((s) => ({ ...s, open: v, lead: v ? s.lead : null }))
+        }
         lead={statusDialog.lead}
         initialStatus={statusDialog.initial}
+        initialSubstatus={statusDialog.initialSubstatus}
         title={statusDialog.title}
       />
       <ScheduleVisitDialog

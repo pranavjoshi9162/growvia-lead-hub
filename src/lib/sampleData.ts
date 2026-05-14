@@ -2,79 +2,97 @@ export type Plan = "Gold" | "Silver";
 export type Potential = "High" | "Low";
 
 export type LeadStatus =
-  | "Cold Call"
-  | "Schedule Visit"
-  | "Visit Done"
-  | "Demo Schedule"
-  | "Demo Done"
-  | "In-Progress"
-  | "Free Trial"
-  | "Sale Done"
-  | "Closed - Dead";
+  | "New Lead"
+  | "Contacted"
+  | "Visit"
+  | "Demo"
+  | "Negotiation"
+  | "Trial"
+  | "Converted"
+  | "Lost";
 
 export const LEAD_STATUSES: LeadStatus[] = [
-  "Cold Call",
-  "Schedule Visit",
-  "Visit Done",
-  "Demo Schedule",
-  "Demo Done",
-  "In-Progress",
-  "Free Trial",
-  "Sale Done",
-  "Closed - Dead",
+  "New Lead",
+  "Contacted",
+  "Visit",
+  "Demo",
+  "Negotiation",
+  "Trial",
+  "Converted",
+  "Lost",
 ];
 
-// Substatus options keyed by main status
 export const SUBSTATUS_MAP: Record<LeadStatus, string[]> = {
-  "Cold Call": [
-    "New Lead",
-    "Duplicate",
-    "Invalid",
-    "Connected – Interested",
-    "Connected – Not Interested",
-    "No Answer – Attempt 1",
-    "No Answer – Attempt 2",
-    "No Answer – Attempt 3",
-    "Wrong Number",
-    "Callback Scheduled",
-    "DNC – Do Not Call",
-    "Paused – Retry Later",
+  "New Lead": [
+    "Website Inquiry",
+    "Referral",
+    "SEO Lead",
+    "Instagram Lead",
+    "YouTube Lead",
+    "Manual Entry",
   ],
-  "Schedule Visit": [
-    "Visit Planned",
-    "Visit Checked In",
-    "Owner Not Available",
+  Contacted: [
+    "Cold Call",
+    "Callback Later",
+    "No Answer",
+    "Interested",
+    "Follow-up Pending",
+  ],
+  Visit: [
+    "Visit Scheduled",
+    "Visit Completed",
     "Visit Rescheduled",
+    "Owner Unavailable",
+    "Visit Missed",
   ],
-  "Visit Done": ["Signed Up", "Trial Requested", "Follow-up Needed"],
-  "Demo Schedule": ["Demo Scheduled", "Demo Rescheduled", "No Show"],
-  "Demo Done": ["Very Interested", "Considering / Hot", "Not Interested"],
-  "In-Progress": [
-    "Proposal Sent",
-    "Negotiating",
+  Demo: [
+    "Demo Scheduled",
+    "Demo Completed",
+    "Demo Rescheduled",
+    "No Show",
+    "Follow-up Needed",
+  ],
+  Negotiation: [
+    "Proposal Shared",
+    "Pricing Discussion",
     "Discount Requested",
-    "Waiting for Decision",
-    "Proposal Rejected",
+    "Decision Pending",
   ],
-  "Free Trial": [
-    "Trial Activated",
-    "Trial Expired – Converted",
-    "Trial Expired – Not Converted",
-    "Trial Extended",
-  ],
-  "Sale Done": ["Active – Onboarding", "Active – Live", "Up for Renewal", "At Risk"],
-  "Closed - Dead": [
-    "Not Interested",
+  Trial: ["Trial Started", "Trial Active", "Trial Extended", "Trial Expired"],
+  Converted: ["Monthly Plan", "Yearly Plan", "Onboarding", "Renewal Pending"],
+  Lost: [
     "No Budget",
-    "Chose Competitor",
-    "Bad Timing",
-    "Unreachable",
+    "Competitor Chosen",
+    "No Response",
+    "Not Interested",
     "Business Closed",
   ],
 };
 
-export const SOURCES = ["Website", "Referral", "WhatsApp Campaign", "Walk-in", "Instagram", "Google Ads"];
+/** Lead source / inquiry channel (aligned with New Lead substatuses where applicable). */
+export const SOURCES = [
+  "Website Inquiry",
+  "Referral",
+  "SEO Lead",
+  "Instagram Lead",
+  "YouTube Lead",
+  "Manual Entry",
+  "WhatsApp Campaign",
+  "Walk-in",
+  "Google Ads",
+];
 export const SALES_PEOPLE = ["Omii Jariwala", "Priya Shah", "Rahul Mehta", "Aisha Khan"];
+
+/** Active reps shown in assignee pickers (subset when backend provides it). */
+export const ACTIVE_SALES_TEAM = SALES_PEOPLE;
+
+/** Default logged-in rep for Quick Lead until auth is wired. */
+export const DEFAULT_LOGGED_IN_SALES_REP = SALES_PEOPLE[0];
+
+/** UI label for pipeline status; backend / data still use `Converted`. */
+export function leadStatusDisplay(status: LeadStatus): string {
+  return status === "Converted" ? "Sale Done" : status;
+}
 
 // ---------- Visits ----------
 export type VisitType = "Cold Visit" | "Demo Visit" | "Follow-up Visit";
@@ -103,7 +121,6 @@ export interface TimelineEntry {
   substatus?: string;
   notes?: string;
   followUpDate?: string;
-  // visit fields
   visitType?: VisitType;
   visitStatus?: VisitStatus;
   assignedTo?: string;
@@ -131,16 +148,13 @@ export interface Lead {
   notes?: string;
   timeline: TimelineEntry[];
   visits?: Visit[];
-  // Business details
   outletAddress?: string;
   outletsCount?: number;
   staffCount?: number;
   currentPlatform?: string;
   businessType?: BusinessType;
-  // Notes
   clientNotes?: string;
   internalNotes?: string;
-  // Demo
   demoType?: DemoType;
   demoDate?: string;
   demoOutcome?: string;
@@ -162,9 +176,9 @@ export const SAMPLE_LEADS: Lead[] = [
     outletAddress: "Adajan, Surat",
     phone: "+91 98200 12345",
     email: "rahul@tulsirestaurant.in",
-    source: "Website",
+    source: "Website Inquiry",
     potential: "High",
-    status: "Demo Schedule",
+    status: "Demo",
     substatus: "Demo Scheduled",
     nextFollowUp: d(2),
     assignedTo: "Omii Jariwala",
@@ -174,9 +188,9 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "v1", type: "Demo Visit", date: d(2), assignedTo: "Omii Jariwala", status: "Scheduled", notes: "Demo at outlet" },
     ],
     timeline: [
-      { id: "t1", kind: "status", status: "Cold Call", substatus: "New Lead", timestamp: d(-12), notes: "Came from website contact form." },
-      { id: "t2", kind: "call", status: "Cold Call", substatus: "Connected – Interested", timestamp: d(-10), notes: "Intro call done, sent pricing." },
-      { id: "t3", kind: "status", status: "Demo Schedule", substatus: "Demo Scheduled", timestamp: d(-1), followUpDate: d(2) },
+      { id: "t1", kind: "status", status: "New Lead", substatus: "Website Inquiry", timestamp: d(-12), notes: "Came from website contact form." },
+      { id: "t2", kind: "call", status: "Contacted", substatus: "Interested", timestamp: d(-10), notes: "Intro call done, sent pricing." },
+      { id: "t3", kind: "status", status: "Demo", substatus: "Demo Scheduled", timestamp: d(-1), followUpDate: d(2) },
       { id: "t4", kind: "visit", visitType: "Demo Visit", visitStatus: "Scheduled", assignedTo: "Omii Jariwala", timestamp: d(-1), notes: "Demo scheduled at outlet" },
     ],
   },
@@ -190,8 +204,8 @@ export const SAMPLE_LEADS: Lead[] = [
     email: "hello@cafeamara.in",
     source: "Referral",
     potential: "High",
-    status: "Demo Done",
-    substatus: "Considering / Hot",
+    status: "Demo",
+    substatus: "Follow-up Needed",
     nextFollowUp: d(1),
     assignedTo: "Priya Shah",
     createdAt: d(-20),
@@ -199,11 +213,11 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "v1", type: "Demo Visit", date: d(-2), assignedTo: "Priya Shah", status: "Completed", notes: "Owner liked loyalty module" },
     ],
     timeline: [
-      { id: "t1", kind: "status", status: "Cold Call", substatus: "New Lead", timestamp: d(-20) },
-      { id: "t2", kind: "call", status: "Cold Call", substatus: "Connected – Interested", timestamp: d(-18), notes: "Referred by Tulsi Restaurant." },
-      { id: "t3", kind: "status", status: "Demo Schedule", substatus: "Demo Scheduled", timestamp: d(-10) },
+      { id: "t1", kind: "status", status: "New Lead", substatus: "Referral", timestamp: d(-20) },
+      { id: "t2", kind: "call", status: "Contacted", substatus: "Interested", timestamp: d(-18), notes: "Referred by Tulsi Restaurant." },
+      { id: "t3", kind: "status", status: "Demo", substatus: "Demo Scheduled", timestamp: d(-10) },
       { id: "t4", kind: "visit", visitType: "Demo Visit", visitStatus: "Completed", assignedTo: "Priya Shah", timestamp: d(-2), notes: "Demo done at cafe" },
-      { id: "t5", kind: "status", status: "Demo Done", substatus: "Considering / Hot", timestamp: d(-2), followUpDate: d(1) },
+      { id: "t5", kind: "status", status: "Demo", substatus: "Follow-up Needed", timestamp: d(-2), followUpDate: d(1) },
     ],
   },
   {
@@ -216,14 +230,14 @@ export const SAMPLE_LEADS: Lead[] = [
     email: "arjun@urbanthali.com",
     source: "WhatsApp Campaign",
     potential: "Low",
-    status: "Cold Call",
-    substatus: "Callback Scheduled",
+    status: "Contacted",
+    substatus: "Follow-up Pending",
     nextFollowUp: d(0),
     assignedTo: "Rahul Mehta",
     createdAt: d(-8),
     timeline: [
-      { id: "t1", kind: "status", status: "Cold Call", substatus: "New Lead", timestamp: d(-8) },
-      { id: "t2", kind: "call", status: "Cold Call", substatus: "Callback Scheduled", timestamp: d(-2), followUpDate: d(0), notes: "Budget concern, callback today" },
+      { id: "t1", kind: "status", status: "New Lead", substatus: "Manual Entry", timestamp: d(-8) },
+      { id: "t2", kind: "call", status: "Contacted", substatus: "Follow-up Pending", timestamp: d(-2), followUpDate: d(0), notes: "Budget concern, callback today" },
     ],
   },
   {
@@ -234,17 +248,17 @@ export const SAMPLE_LEADS: Lead[] = [
     outletAddress: "Indiranagar, Bengaluru",
     phone: "+91 97000 88991",
     email: "sneha@spiceroute.in",
-    source: "Instagram",
+    source: "Instagram Lead",
     potential: "High",
-    status: "Sale Done",
-    substatus: "Active – Live",
+    status: "Converted",
+    substatus: "Onboarding",
     assignedTo: "Aisha Khan",
     createdAt: d(-35),
     timeline: [
-      { id: "t1", kind: "status", status: "Cold Call", timestamp: d(-35) },
-      { id: "t2", kind: "status", status: "Demo Done", timestamp: d(-25) },
-      { id: "t3", kind: "trial", status: "Free Trial", substatus: "Trial Activated", timestamp: d(-18) },
-      { id: "t4", kind: "status", status: "Sale Done", substatus: "Active – Live", timestamp: d(-3), notes: "Onboarded successfully." },
+      { id: "t1", kind: "status", status: "New Lead", timestamp: d(-35) },
+      { id: "t2", kind: "status", status: "Demo", substatus: "Demo Completed", timestamp: d(-25) },
+      { id: "t3", kind: "trial", status: "Trial", substatus: "Trial Started", timestamp: d(-18) },
+      { id: "t4", kind: "status", status: "Converted", substatus: "Onboarding", timestamp: d(-3), notes: "Onboarded successfully." },
     ],
   },
   {
@@ -257,8 +271,8 @@ export const SAMPLE_LEADS: Lead[] = [
     email: "karan@biryanihouse.in",
     source: "Google Ads",
     potential: "High",
-    status: "Schedule Visit",
-    substatus: "Visit Planned",
+    status: "Visit",
+    substatus: "Visit Scheduled",
     nextFollowUp: d(3),
     assignedTo: "Omii Jariwala",
     createdAt: d(-5),
@@ -266,8 +280,8 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "v1", type: "Cold Visit", date: d(1), assignedTo: "Omii Jariwala", status: "Scheduled", notes: "First visit" },
     ],
     timeline: [
-      { id: "t1", kind: "status", status: "Cold Call", substatus: "New Lead", timestamp: d(-5) },
-      { id: "t2", kind: "status", status: "Schedule Visit", substatus: "Visit Planned", timestamp: d(-1), followUpDate: d(3) },
+      { id: "t1", kind: "status", status: "New Lead", substatus: "SEO Lead", timestamp: d(-5) },
+      { id: "t2", kind: "status", status: "Visit", substatus: "Visit Scheduled", timestamp: d(-1), followUpDate: d(3) },
       { id: "t3", kind: "visit", visitType: "Cold Visit", visitStatus: "Scheduled", assignedTo: "Omii Jariwala", timestamp: d(-1), notes: "Visit planned" },
     ],
   },
@@ -281,13 +295,13 @@ export const SAMPLE_LEADS: Lead[] = [
     email: "divya@coastalkitchen.in",
     source: "Walk-in",
     potential: "Low",
-    status: "Closed - Dead",
-    substatus: "Chose Competitor",
+    status: "Lost",
+    substatus: "Competitor Chosen",
     assignedTo: "Priya Shah",
     createdAt: d(-40),
     timeline: [
-      { id: "t1", kind: "status", status: "Cold Call", timestamp: d(-40) },
-      { id: "t2", kind: "status", status: "Closed - Dead", substatus: "Chose Competitor", timestamp: d(-15) },
+      { id: "t1", kind: "status", status: "New Lead", timestamp: d(-40) },
+      { id: "t2", kind: "status", status: "Lost", substatus: "Competitor Chosen", timestamp: d(-15) },
     ],
   },
   {
@@ -300,15 +314,15 @@ export const SAMPLE_LEADS: Lead[] = [
     email: "vikram@curryleaf.in",
     source: "Referral",
     potential: "High",
-    status: "Free Trial",
-    substatus: "Trial Activated",
+    status: "Trial",
+    substatus: "Trial Active",
     nextFollowUp: d(4),
     assignedTo: "Aisha Khan",
     createdAt: d(-15),
     timeline: [
-      { id: "t1", kind: "status", status: "Cold Call", timestamp: d(-15) },
-      { id: "t2", kind: "status", status: "Demo Done", timestamp: d(-8) },
-      { id: "t3", kind: "trial", status: "Free Trial", substatus: "Trial Activated", timestamp: d(-4), followUpDate: d(4) },
+      { id: "t1", kind: "status", status: "New Lead", timestamp: d(-15) },
+      { id: "t2", kind: "status", status: "Demo", substatus: "Demo Completed", timestamp: d(-8) },
+      { id: "t3", kind: "trial", status: "Trial", substatus: "Trial Active", timestamp: d(-4), followUpDate: d(4) },
     ],
   },
   {
@@ -319,15 +333,15 @@ export const SAMPLE_LEADS: Lead[] = [
     outletAddress: "Koregaon Park, Pune",
     phone: "+91 98123 45678",
     email: "anita@greenbowl.in",
-    source: "Website",
+    source: "Website Inquiry",
     potential: "Low",
-    status: "Cold Call",
-    substatus: "New Lead",
+    status: "New Lead",
+    substatus: "Website Inquiry",
     nextFollowUp: d(0),
     assignedTo: "Rahul Mehta",
     createdAt: d(-1),
     timeline: [
-      { id: "t1", kind: "status", status: "Cold Call", substatus: "New Lead", timestamp: d(-1), followUpDate: d(0) },
+      { id: "t1", kind: "status", status: "New Lead", substatus: "Website Inquiry", timestamp: d(-1), followUpDate: d(0) },
     ],
   },
 ];

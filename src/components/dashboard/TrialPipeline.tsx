@@ -3,7 +3,7 @@ import { Hourglass, Flame, CheckCircle2, Clock } from "lucide-react";
 const items = [
   { label: "Active Trials", sub: "Healthy pipeline", value: 7, icon: Hourglass, soft: false },
   { label: "Trials Expiring in 7 Days", sub: "Needs follow-up", value: 2, icon: Flame, soft: true },
-  { label: "Sale Done from Trials", sub: "This month", value: 6, icon: CheckCircle2, soft: false },
+  { label: "Sales done from trials", sub: "This month", value: 6, icon: CheckCircle2, soft: false },
   { label: "Dropped Trials", sub: "Last 30 days", value: 1, icon: Clock, soft: false },
 ];
 

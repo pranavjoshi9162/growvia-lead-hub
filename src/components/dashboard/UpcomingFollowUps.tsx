@@ -1,9 +1,10 @@
 import { format } from "date-fns";
-import { SAMPLE_LEADS } from "@/lib/sampleData";
+import { useLeads } from "@/context/LeadsContext";
 import { Calendar } from "lucide-react";
 
 export function UpcomingFollowUps() {
-  const items = SAMPLE_LEADS
+  const { leads } = useLeads();
+  const items = leads
     .filter((l) => l.nextFollowUp)
     .sort((a, b) => new Date(a.nextFollowUp!).getTime() - new Date(b.nextFollowUp!).getTime())
     .slice(0, 6);

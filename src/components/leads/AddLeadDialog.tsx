@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,18 +7,33 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import {
-  LEAD_STATUSES, LeadStatus, SUBSTATUS_MAP, SOURCES, SALES_PEOPLE,
-  BUSINESS_TYPES, BusinessType, VISIT_TYPES, VisitType,
+  LEAD_STATUSES, Lead, LeadStatus, SUBSTATUS_MAP, SOURCES, SALES_PEOPLE,
+  BUSINESS_TYPES, BusinessType, VISIT_TYPES, VisitType, Potential,
+  ACTIVE_SALES_TEAM, DEFAULT_LOGGED_IN_SALES_REP, leadStatusDisplay,
 } from "@/lib/sampleData";
 import { useLeads } from "@/context/LeadsContext";
 import { toast } from "sonner";
 import {
   Zap, FileText, User2, Building2, Settings2, MessagesSquare,
-  Activity, MapPin, Plus, Trash2,
+  Activity, MapPin, Plus, Trash2, ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
-interface Props { open: boolean; onOpenChange: (v: boolean) => void; }
+interface Props {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  /** When set, dialog opens in edit mode with the full multi-tab form prefilled. */
+  editingLead?: Lead | null;
+}
 
 type TabKey = "quick" | "detailed" | "sales" | "visits" | "notes";
 
@@ -32,7 +47,13 @@ interface Outlet {
 
 const newOutlet = (): Outlet => ({ name: "", address: "", mapsLink: "", city: "", state: "" });
 
-const quickInitial = { name: "", phone: "", business: "", address: "" };
+const quickInitial = {
+  name: "",
+  phone: "",
+  business: "",
+  address: "",
+  assignedTo: DEFAULT_LOGGED_IN_SALES_REP,
+};
 
 const detailedInitial = {
   // basic
@@ -48,11 +69,11 @@ const detailedInitial = {
   clientNotes: "", adminNotes: "",
   // sales
   source: SOURCES[0],
-  status: "Cold Call" as LeadStatus,
-  substatus: "New Lead",
+  status: "New Lead" as LeadStatus,
+  substatus: "Manual Entry",
   nextFollowUp: "",
   assignedTo: SALES_PEOPLE[0],
-  conversionStatus: "" as "" | "In Pipeline" | "Converted" | "Lost",
+  conversionStatus: "" as "" | "In Pipeline" | "converted" | "Lost",
   // visit
   visitType: "Cold Visit" as VisitType,
   visitDate: "",
@@ -64,7 +85,7 @@ const detailedInitial = {
 const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "quick", label: "Quick Lead", icon: Zap },
   { key: "detailed", label: "Detailed Form", icon: FileText },
-  { key: "sales", label: "Sales", icon: Activity },
+  { key: "sales", label: "Sales / Pipeline", icon: Activity },
   { key: "visits", label: "Visits", icon: MapPin },
   { key: "notes", label: "Discussion & Notes", icon: MessagesSquare },
 ];
@@ -83,17 +104,125 @@ function TabHeader({ icon: Icon, title, subtitle }: { icon: any; title: string; 
   );
 }
 
-export function AddLeadDialog({ open, onOpenChange }: Props) {
-  const { addLead, scheduleVisit } = useLeads() as any;
+function followUpInputValue(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function AssignedToCombobox({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly string[];
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-10 w-full justify-between font-normal px-3 py-2"
+        >
+          <span className="truncate">{value}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search team member…" className="h-9" />
+          <CommandList>
+            <CommandEmpty>No member found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((name) => (
+                <CommandItem
+                  key={name}
+                  value={name}
+                  onSelect={() => {
+                    onChange(name);
+                    setOpen(false);
+                  }}
+                >
+                  {name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
+  const { addLead, scheduleVisit, updateLead } = useLeads();
   const [tab, setTab] = useState<TabKey>("quick");
   const [quick, setQuick] = useState(quickInitial);
   const [form, setForm] = useState(detailedInitial);
+  const isEdit = !!editingLead;
 
   const resetAll = () => {
     setQuick(quickInitial);
     setForm(detailedInitial);
     setTab("quick");
   };
+
+  useEffect(() => {
+    if (!open) return;
+    if (editingLead) {
+      const primaryOutlet = editingLead.outletAddress
+        ? [{ ...newOutlet(), address: editingLead.outletAddress }]
+        : [newOutlet()];
+      setQuick({
+        name: editingLead.name,
+        phone: editingLead.phone,
+        business: editingLead.business,
+        address: editingLead.outletAddress ?? "",
+        assignedTo: editingLead.assignedTo,
+      });
+      const src = SOURCES.includes(editingLead.source) ? editingLead.source : SOURCES[0];
+      const subs = SUBSTATUS_MAP[editingLead.status] ?? [];
+      const sub =
+        editingLead.substatus && subs.includes(editingLead.substatus)
+          ? editingLead.substatus
+          : subs[0] ?? "";
+      setForm({
+        ...detailedInitial,
+        name: editingLead.name,
+        phone: editingLead.phone,
+        email: editingLead.email,
+        business: editingLead.business,
+        businessType: editingLead.businessType ?? "",
+        outlets: primaryOutlet,
+        outletsCount: editingLead.outletsCount != null ? String(editingLead.outletsCount) : "",
+        staffCount: editingLead.staffCount != null ? String(editingLead.staffCount) : "",
+        currentPlatform: editingLead.currentPlatform ?? "",
+        source: src,
+        status: editingLead.status,
+        substatus: sub,
+        nextFollowUp: followUpInputValue(editingLead.nextFollowUp),
+        assignedTo: editingLead.assignedTo,
+        clientNotes: editingLead.clientNotes ?? "",
+        adminNotes: editingLead.internalNotes ?? "",
+        visitType: "Cold Visit",
+        visitDate: "",
+        visitTime: "",
+        visitAssignedTo: editingLead.assignedTo,
+        visitNotes: "",
+      });
+      setTab("quick");
+    } else {
+      resetAll();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when opening add vs edit
+  }, [open, editingLead?.id]);
 
   const updateQ = (k: string, v: any) => setQuick((f) => ({ ...f, [k]: v }));
   const updateD = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
@@ -122,6 +251,8 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
         name: quick.name.trim(),
         phone: quick.phone.trim(),
         business: quick.business.trim(),
+        assignedTo: quick.assignedTo,
+        visitAssignedTo: quick.assignedTo,
         outlets: [{ ...newOutlet(), address: quick.address.trim() }],
       }));
       setTab("visits");
@@ -133,68 +264,108 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
       phone: quick.phone.trim(),
       email: "",
       business: quick.business.trim(),
-      source: "Walk-in",
+      source: "Manual Entry",
       potential: "High",
-      status: "Cold Call",
-      substatus: "New Lead",
-      assignedTo: SALES_PEOPLE[0],
+      status: "New Lead",
+      substatus: "Manual Entry",
+      assignedTo: quick.assignedTo,
       outletAddress: quick.address.trim() || undefined,
     });
-    toast.success("Lead added — Cold Call · New Lead");
+    toast.success("Lead added — New Lead · Manual Entry");
     close();
   };
 
   const saveAll = () => {
-    if (!form.name.trim() && !form.business.trim() && !form.phone.trim()) {
+    const f =
+      isEdit && tab === "quick"
+        ? {
+            ...form,
+            name: quick.name.trim(),
+            phone: quick.phone.trim(),
+            business: quick.business.trim(),
+            assignedTo: quick.assignedTo,
+            outlets: [{ ...(form.outlets[0] ?? newOutlet()), address: quick.address.trim() }],
+          }
+        : form;
+
+    if (!f.name.trim() && !f.business.trim() && !f.phone.trim()) {
       toast.error("Add at least a name, phone or business");
       return;
     }
-    const primary = form.outlets[0];
+    const primary = f.outlets[0];
     const address = primary
       ? [primary.address, primary.city, primary.state].filter(Boolean).join(", ")
       : "";
-    const otherOutlets = form.outlets.slice(1)
+    const otherOutlets = f.outlets
+      .slice(1)
       .map((o, i) => `Outlet ${i + 2}: ${o.name || "—"} | ${[o.address, o.city, o.state].filter(Boolean).join(", ")}${o.mapsLink ? ` | ${o.mapsLink}` : ""}`)
-      .filter(Boolean).join("\n");
+      .filter(Boolean)
+      .join("\n");
 
-    const tempId = `L-tmp-${Date.now()}`;
-    addLead({
-      name: form.name.trim() || "Unnamed Lead",
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      business: form.business.trim() || "—",
-      source: form.source,
-      potential: "High" as any,
-      status: form.status,
-      substatus: form.substatus || undefined,
-      nextFollowUp: form.nextFollowUp ? new Date(form.nextFollowUp).toISOString() : undefined,
-      assignedTo: form.assignedTo,
+    const internalNotes = [
+      f.adminNotes,
+      otherOutlets,
+      primary?.mapsLink && `Maps: ${primary.mapsLink}`,
+      f.existingLoyalty && `Loyalty: ${f.existingLoyalty}`,
+      f.whatsappMarketing && `WhatsApp: ${f.whatsappMarketing}`,
+      f.monthlyCustomers && `Monthly customers: ${f.monthlyCustomers}`,
+      f.revenueRange && `Revenue: ${f.revenueRange}`,
+      f.conversionStatus &&
+        `Conversion: ${f.conversionStatus === "converted" ? "Sale Done" : f.conversionStatus}`,
+    ]
+      .filter(Boolean)
+      .join("\n") || undefined;
+
+    const patch: Partial<Lead> = {
+      name: f.name.trim() || "Unnamed Lead",
+      phone: f.phone.trim(),
+      email: f.email.trim(),
+      business: f.business.trim() || "—",
+      source: f.source,
+      status: f.status,
+      substatus: f.substatus || undefined,
+      nextFollowUp: f.nextFollowUp ? new Date(f.nextFollowUp).toISOString() : undefined,
+      assignedTo: f.assignedTo,
       outletAddress: address || undefined,
-      outletsCount: form.outletsCount ? Number(form.outletsCount) : undefined,
-      staffCount: form.staffCount ? Number(form.staffCount) : undefined,
-      currentPlatform: form.currentPlatform || undefined,
-      businessType: (form.businessType || undefined) as BusinessType | undefined,
-      clientNotes: form.clientNotes || undefined,
-      internalNotes: [
-        form.adminNotes,
-        otherOutlets,
-        primary?.mapsLink && `Maps: ${primary.mapsLink}`,
-        form.existingLoyalty && `Loyalty: ${form.existingLoyalty}`,
-        form.whatsappMarketing && `WhatsApp: ${form.whatsappMarketing}`,
-        form.monthlyCustomers && `Monthly customers: ${form.monthlyCustomers}`,
-        form.revenueRange && `Revenue: ${form.revenueRange}`,
-        form.conversionStatus && `Conversion: ${form.conversionStatus}`,
-      ].filter(Boolean).join("\n") || undefined,
+      outletsCount: f.outletsCount ? Number(f.outletsCount) : undefined,
+      staffCount: f.staffCount ? Number(f.staffCount) : undefined,
+      currentPlatform: f.currentPlatform || undefined,
+      businessType: (f.businessType || undefined) as BusinessType | undefined,
+      clientNotes: f.clientNotes || undefined,
+      internalNotes,
+    };
+
+    if (isEdit && editingLead) {
+      updateLead(editingLead.id, { ...patch, potential: editingLead.potential });
+      if (f.visitDate) {
+        const dateIso = new Date(`${f.visitDate}T${f.visitTime || "10:00"}`).toISOString();
+        scheduleVisit(editingLead.id, {
+          type: f.visitType,
+          date: dateIso,
+          assignedTo: f.visitAssignedTo,
+          status: "Scheduled",
+          notes: f.visitNotes || undefined,
+        });
+      }
+      toast.success("Lead updated");
+      close();
+      return;
+    }
+
+    const newId = addLead({
+      ...patch,
+      potential: "High" as Potential,
+      notes: undefined,
     });
 
-    if (form.visitDate) {
-      const dateIso = new Date(`${form.visitDate}T${form.visitTime || "10:00"}`).toISOString();
-      scheduleVisit?.(tempId, {
-        type: form.visitType,
+    if (f.visitDate) {
+      const dateIso = new Date(`${f.visitDate}T${f.visitTime || "10:00"}`).toISOString();
+      scheduleVisit(newId, {
+        type: f.visitType,
         date: dateIso,
-        assignedTo: form.visitAssignedTo,
+        assignedTo: f.visitAssignedTo,
         status: "Scheduled",
-        notes: form.visitNotes || undefined,
+        notes: f.visitNotes || undefined,
       });
     }
 
@@ -208,9 +379,11 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) resetAll(); }}>
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle className="text-xl">Add Lead</DialogTitle>
+          <DialogTitle className="text-xl">{isEdit ? "Edit Lead" : "Add Lead"}</DialogTitle>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Capture quickly, then qualify progressively across tabs.
+            {isEdit
+              ? "Update every section — same layout as adding a manual lead."
+              : "Capture quickly, then qualify progressively across tabs."}
           </p>
 
           {/* Tabs */}
@@ -253,14 +426,25 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
                   <Label>Business Name *</Label>
                   <Input value={quick.business} onChange={(e) => updateQ("business", e.target.value)} placeholder="Spice Route Restaurant" />
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Address</Label>
-                  <Input value={quick.address} onChange={(e) => updateQ("address", e.target.value)} placeholder="Adajan, Surat" />
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Address</Label>
+                    <Input value={quick.address} onChange={(e) => updateQ("address", e.target.value)} placeholder="Adajan, Surat" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Assigned To</Label>
+                    <AssignedToCombobox
+                      value={quick.assignedTo}
+                      onChange={(v) => updateQ("assignedTo", v)}
+                      options={ACTIVE_SALES_TEAM}
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="mt-4 rounded-lg bg-primary/[0.04] border border-primary/15 px-3 py-2 text-xs text-muted-foreground">
-                Will auto-assign status <span className="font-medium text-foreground">Cold Call</span> · <span className="font-medium text-foreground">New Lead</span>
+                Will auto-assign status <span className="font-medium text-foreground">New Lead</span> ·{" "}
+                <span className="font-medium text-foreground">Manual Entry</span>
               </div>
             </section>
           </div>
@@ -355,17 +539,24 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
         {tab === "sales" && (
           <div className="px-6 py-5">
             <section className="rounded-xl border border-border p-5">
-              <TabHeader icon={Activity} title="Sales" subtitle="Pipeline stage, follow-ups and conversion" />
+              <TabHeader icon={Activity} title="Sales / Pipeline" subtitle="Main status, substatus, source and follow-ups" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="space-y-1.5">
                   <Label>Lead Stage</Label>
-                  <Select value={form.status} onValueChange={(v) => updateD("status", v)}>
+                  <Select
+                    value={form.status}
+                    onValueChange={(v) => {
+                      const ns = v as LeadStatus;
+                      const opts = SUBSTATUS_MAP[ns] ?? [];
+                      setForm((f) => ({ ...f, status: ns, substatus: opts[0] ?? "" }));
+                    }}
+                  >
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <SelectContent>{LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{leadStatusDisplay(s)}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Sales Stage</Label>
+                  <Label>Substatus</Label>
                   <Select value={form.substatus || undefined} onValueChange={(v) => updateD("substatus", v)}>
                     <SelectTrigger><SelectValue placeholder="Select stage" /></SelectTrigger>
                     <SelectContent>{subOptions.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
@@ -392,7 +583,7 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
                     <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="In Pipeline">In Pipeline</SelectItem>
-                      <SelectItem value="Converted">Converted</SelectItem>
+                      <SelectItem value="converted">Sale Done</SelectItem>
                       <SelectItem value="Lost">Lost</SelectItem>
                     </SelectContent>
                   </Select>
@@ -450,10 +641,16 @@ export function AddLeadDialog({ open, onOpenChange }: Props) {
         )}
 
         <DialogFooter className="px-6 py-4 border-t bg-muted/30 gap-2">
-          <Button variant="outline" onClick={close}>Cancel</Button>
-          {tab === "quick" ? (
+          <Button variant="outline" onClick={close}>
+            Cancel
+          </Button>
+          {isEdit ? (
+            <Button onClick={saveAll}>Update Lead</Button>
+          ) : tab === "quick" ? (
             <>
-              <Button variant="secondary" onClick={() => saveQuick(true)}>Save & Add Visit</Button>
+              <Button variant="secondary" onClick={() => saveQuick(true)}>
+                Save & Add Visit
+              </Button>
               <Button onClick={() => saveQuick(false)}>Save Lead</Button>
             </>
           ) : (

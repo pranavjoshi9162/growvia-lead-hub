@@ -1,16 +1,15 @@
-import { Lead, LeadStatus } from "@/lib/sampleData";
+import { Lead, LeadStatus, leadStatusDisplay } from "@/lib/sampleData";
 import { format } from "date-fns";
 import { Check, Circle, Phone, MapPin, Monitor, FileText, Hourglass } from "lucide-react";
 
 const FLOW: LeadStatus[] = [
-  "Cold Call",
-  "Schedule Visit",
-  "Visit Done",
-  "Demo Schedule",
-  "Demo Done",
-  "In-Progress",
-  "Free Trial",
-  "Sale Done",
+  "New Lead",
+  "Contacted",
+  "Visit",
+  "Demo",
+  "Negotiation",
+  "Trial",
+  "Converted",
 ];
 
 export function LeadTimeline({ lead }: { lead: Lead }) {
@@ -50,7 +49,7 @@ export function LeadTimeline({ lead }: { lead: Lead }) {
                     : "bg-secondary text-muted-foreground border-border"
                 }`}
               >
-                {stage}
+                {leadStatusDisplay(stage)}
               </div>
             );
           })}
@@ -73,7 +72,9 @@ export function LeadTimeline({ lead }: { lead: Lead }) {
                 ? "Trial Update"
                 : e.kind === "proposal"
                 ? "Proposal"
-                : e.status ?? "Update";
+                : e.status
+                ? leadStatusDisplay(e.status)
+                : "Update";
             return (
               <div key={e.id} className="flex gap-3 pb-4 last:pb-0 relative">
                 {!isLast && <span className="absolute left-[14px] top-7 bottom-0 w-px bg-border" />}

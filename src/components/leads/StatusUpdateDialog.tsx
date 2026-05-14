@@ -1,13 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
-  LEAD_STATUSES, LeadStatus, Lead, SUBSTATUS_MAP,
-  VISIT_TYPES, VISIT_STATUSES, VisitType, VisitStatus, SALES_PEOPLE,
+  LEAD_STATUSES,
+  LeadStatus,
+  SUBSTATUS_MAP,
+  SALES_PEOPLE,
+  Lead,
+  leadStatusDisplay,
 } from "@/lib/sampleData";
 import { useLeads } from "@/context/LeadsContext";
 import { toast } from "sonner";
@@ -16,133 +20,140 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   lead: Lead | null;
+  /** Pre-select main status (e.g. quick actions from row menu). */
   initialStatus?: LeadStatus;
+  /** When set with initialStatus, picks this substatus if valid for that stage. */
+  initialSubstatus?: string;
   title?: string;
 }
 
-const visitStatuses: LeadStatus[] = ["Schedule Visit", "Visit Done"];
+function followUpInputValue(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
 
-export function StatusUpdateDialog({ open, onOpenChange, lead, initialStatus, title }: Props) {
-  const { setStatus, scheduleVisit } = useLeads();
-  const [status, setStatusVal] = useState<LeadStatus>("Cold Call");
+export function StatusUpdateDialog({ open, onOpenChange, lead, initialStatus, initialSubstatus, title }: Props) {
+  const { setStatus } = useLeads();
+  const [status, setStatusLocal] = useState<LeadStatus>("Contacted");
   const [substatus, setSubstatus] = useState("");
-  const [followUpDate, setFollowUpDate] = useState("");
-  const [note, setNote] = useState("");
+  const [assignedTo, setAssignedTo] = useState(SALES_PEOPLE[0]);
+  const [followUp, setFollowUp] = useState("");
+  const [notes, setNotes] = useState("");
 
-  // visit
-  const [visitType, setVisitType] = useState<VisitType>("Cold Visit");
-  const [visitStatus, setVisitStatus] = useState<VisitStatus>("Scheduled");
-  const [visitDate, setVisitDate] = useState("");
-  const [visitAssignee, setVisitAssignee] = useState(SALES_PEOPLE[0]);
-  const [visitNote, setVisitNote] = useState("");
+  const subOptions = useMemo(() => SUBSTATUS_MAP[status] ?? [], [status]);
 
   useEffect(() => {
-    if (open && lead) {
-      const s = initialStatus ?? lead.status;
-      setStatusVal(s);
-      setSubstatus("");
-      setFollowUpDate("");
-      setNote("");
-      setVisitType(s === "Schedule Visit" ? "Cold Visit" : "Demo Visit");
-      setVisitStatus("Scheduled");
-      setVisitDate("");
-      setVisitAssignee(lead.assignedTo || SALES_PEOPLE[0]);
-      setVisitNote("");
-    }
-  }, [open, lead, initialStatus]);
+    if (!open || !lead) return;
+    const st = initialStatus ?? lead.status;
+    setStatusLocal(st);
+    const subs = SUBSTATUS_MAP[st] ?? [];
+    let nextSub = "";
+    if (initialSubstatus && subs.includes(initialSubstatus)) nextSub = initialSubstatus;
+    else if (
+      lead.substatus &&
+      subs.includes(lead.substatus) &&
+      (!initialStatus || initialStatus === lead.status)
+    )
+      nextSub = lead.substatus;
+    else nextSub = subs[0] ?? "";
+    setSubstatus(nextSub);
+    setAssignedTo(lead.assignedTo || SALES_PEOPLE[0]);
+    setFollowUp(followUpInputValue(lead.nextFollowUp));
+    setNotes("");
+  }, [open, lead, initialStatus, initialSubstatus]);
 
-  const subs = useMemo(() => SUBSTATUS_MAP[status] ?? [], [status]);
-  const showVisit = visitStatuses.includes(status);
+  useEffect(() => {
+    if (!subOptions.length) {
+      setSubstatus("");
+      return;
+    }
+    if (!subOptions.includes(substatus)) setSubstatus(subOptions[0]);
+  }, [status, subOptions, substatus]);
 
   if (!lead) return null;
 
+  const dialogTitle = title ?? "Change Status";
+
   const submit = () => {
-    setStatus(lead.id, status, substatus || undefined, note || undefined, followUpDate ? new Date(followUpDate).toISOString() : undefined);
-    if (showVisit && visitDate) {
-      scheduleVisit(lead.id, {
-        type: visitType,
-        date: new Date(visitDate).toISOString(),
-        assignedTo: visitAssignee,
-        status: visitStatus,
-        notes: visitNote || undefined,
-      });
+    if (!substatus && subOptions.length) {
+      toast.error("Select a substatus");
+      return;
     }
+    const followIso = followUp ? new Date(followUp).toISOString() : null;
+    setStatus(lead.id, status, substatus || undefined, notes || undefined, followIso, assignedTo);
     toast.success("Status updated");
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{title ?? "Update Status"} — {lead.business}</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <p className="text-sm text-muted-foreground">{lead.business}</p>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Main Status</Label>
-              <Select value={status} onValueChange={(v) => { setStatusVal(v as LeadStatus); setSubstatus(""); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Substatus</Label>
-              <Select value={substatus} onValueChange={setSubstatus}>
-                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
-                <SelectContent>{subs.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-1.5">
+            <Label>Main Status</Label>
+            <Select value={status} onValueChange={(v) => setStatusLocal(v as LeadStatus)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LEAD_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {leadStatusDisplay(s)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Substatus</Label>
+            <Select value={substatus || undefined} onValueChange={setSubstatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select substatus" />
+              </SelectTrigger>
+              <SelectContent>
+                {subOptions.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Assigned Salesperson</Label>
+            <Select value={assignedTo} onValueChange={setAssignedTo}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SALES_PEOPLE.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label>Follow-up Date</Label>
-            <Input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} />
+            <Input type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>Note</Label>
-            <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Discussion summary..." />
+            <Label>Notes</Label>
+            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional update notes…" />
           </div>
-
-          {showVisit && (
-            <div className="rounded-lg border border-primary/30 bg-primary/[0.03] p-3 space-y-3">
-              <div className="text-sm font-semibold">Visit Details</div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Visit Type</Label>
-                  <Select value={visitType} onValueChange={(v) => setVisitType(v as VisitType)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{VISIT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Visit Status</Label>
-                  <Select value={visitStatus} onValueChange={(v) => setVisitStatus(v as VisitStatus)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{VISIT_STATUSES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Visit Date</Label>
-                  <Input type="date" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Assigned To</Label>
-                  <Select value={visitAssignee} onValueChange={setVisitAssignee}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{SALES_PEOPLE.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5 col-span-2">
-                  <Label>Visit Notes</Label>
-                  <Textarea rows={2} value={visitNote} onChange={(e) => setVisitNote(e.target.value)} placeholder="Notes about the visit..." />
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={submit}>Save Update</Button>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={submit}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

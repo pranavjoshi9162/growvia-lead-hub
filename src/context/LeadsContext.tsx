@@ -3,10 +3,17 @@ import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry, Visit, VisitStatus } fro
 
 interface LeadsCtx {
   leads: Lead[];
-  addLead: (l: Omit<Lead, "id" | "createdAt" | "timeline"> & { notes?: string }) => void;
+  addLead: (l: Omit<Lead, "id" | "createdAt" | "timeline"> & { notes?: string }) => string;
   updateLead: (id: string, patch: Partial<Lead>) => void;
   appendTimeline: (id: string, entry: Omit<TimelineEntry, "id" | "timestamp">) => void;
-  setStatus: (id: string, status: LeadStatus, substatus?: string, notes?: string, followUpDate?: string) => void;
+  setStatus: (
+    id: string,
+    status: LeadStatus,
+    substatus?: string,
+    notes?: string,
+    followUpDate?: string | null,
+    assignedTo?: string
+  ) => void;
   scheduleVisit: (id: string, visit: Omit<Visit, "id">) => void;
   updateVisitStatus: (leadId: string, visitId: string, status: VisitStatus, notes?: string) => void;
 }
@@ -17,15 +24,19 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState<Lead[]>(SAMPLE_LEADS);
 
   const addLead: LeadsCtx["addLead"] = (l) => {
-    const id = `L-${1000 + leads.length + 1}`;
-    const created = new Date().toISOString();
-    const newLead: Lead = {
-      ...l,
-      id,
-      createdAt: created,
-      timeline: [{ id: "t1", kind: "status", status: l.status, substatus: l.substatus, notes: l.notes, followUpDate: l.nextFollowUp, timestamp: created }],
-    };
-    setLeads((prev) => [newLead, ...prev]);
+    let newId = "";
+    setLeads((prev) => {
+      newId = `L-${1000 + prev.length + 1}`;
+      const created = new Date().toISOString();
+      const newLead: Lead = {
+        ...l,
+        id: newId,
+        createdAt: created,
+        timeline: [{ id: "t1", kind: "status", status: l.status, substatus: l.substatus, notes: l.notes, followUpDate: l.nextFollowUp, timestamp: created }],
+      };
+      return [newLead, ...prev];
+    });
+    return newId;
   };
 
   const updateLead: LeadsCtx["updateLead"] = (id, patch) => {
@@ -45,18 +56,30 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const setStatus: LeadsCtx["setStatus"] = (id, status, substatus, notes, followUpDate) => {
+  const setStatus: LeadsCtx["setStatus"] = (id, status, substatus, notes, followUpDate, assignedTo) => {
     setLeads((prev) =>
       prev.map((l) => {
         if (l.id !== id) return l;
+        const nextFollow =
+          followUpDate === undefined ? l.nextFollowUp : followUpDate || undefined;
         return {
           ...l,
           status,
           substatus,
-          nextFollowUp: followUpDate ?? l.nextFollowUp,
+          nextFollowUp: nextFollow,
+          assignedTo: assignedTo ?? l.assignedTo,
+          notes: notes?.trim() ? notes.trim() : l.notes,
           timeline: [
             ...l.timeline,
-            { id: `t${l.timeline.length + 1}`, kind: "status", status, substatus, notes, followUpDate, timestamp: new Date().toISOString() },
+            {
+              id: `t${l.timeline.length + 1}`,
+              kind: "status",
+              status,
+              substatus,
+              notes: notes?.trim() || undefined,
+              followUpDate: nextFollow,
+              timestamp: new Date().toISOString(),
+            },
           ],
         };
       })
