@@ -5,7 +5,7 @@ import {
   Search, Plus, ChevronDown, ChevronRight, MoreHorizontal, Edit,
   CalendarPlus, CheckCircle2, XCircle, Users, MapPin,
   Clock, CalendarCheck, Monitor, Check, X,
-  ListChecks, AlertCircle, CheckCheck,
+  ListChecks, AlertCircle, CheckCheck, SlidersHorizontal, Phone,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { useLeads } from "@/context/LeadsContext";
 import { LEAD_STATUSES, LeadStatus, SOURCES, SALES_PEOPLE, Lead, leadStatusDisplay } from "@/lib/sampleData";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
