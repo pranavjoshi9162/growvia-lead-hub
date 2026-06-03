@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, ReactNode } from "react";
 import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry, Visit, VisitStatus } from "@/lib/sampleData";
+import { useAuth } from "@/context/AuthContext";
 
 interface LeadsCtx {
   leads: Lead[];
@@ -21,7 +22,15 @@ interface LeadsCtx {
 const Ctx = createContext<LeadsCtx | null>(null);
 
 export function LeadsProvider({ children }: { children: ReactNode }) {
-  const [leads, setLeads] = useState<Lead[]>(SAMPLE_LEADS);
+  const [allLeads, setLeads] = useState<Lead[]>(SAMPLE_LEADS);
+  const { user } = useAuth();
+
+  // Role-based visibility: Sales executives only see leads assigned to them.
+  const leads = useMemo(() => {
+    if (!user || user.role === "super_admin") return allLeads;
+    const me = user.salesName ?? user.name;
+    return allLeads.filter((l) => l.assignedTo === me);
+  }, [allLeads, user]);
 
   const addLead: LeadsCtx["addLead"] = (l) => {
     let newId = "";
