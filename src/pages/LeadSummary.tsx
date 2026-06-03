@@ -14,7 +14,7 @@ export default function LeadSummary() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-primary">Sales & Lead Overview</div>
-          <h1 className="text-2xl font-bold mt-1">Main Dashboard</h1>
+          <h1 className="text-2xl font-bold mt-1">Business Overview</h1>
         </div>
       </div>
 
