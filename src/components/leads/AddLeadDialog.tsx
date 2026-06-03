@@ -353,7 +353,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
     }
 
     const newId = addLead({
-      ...patch,
+      ...(patch as Parameters<typeof addLead>[0]),
       potential: "High" as Potential,
       notes: undefined,
     });
