@@ -31,14 +31,14 @@ export default function SignIn() {
     setSubmitting(true);
     const res = signIn(email, password, remember);
     setSubmitting(false);
-    if (res.ok) {
+    if (res.ok === true) {
       toast.success(`Welcome, ${res.user.name}`);
       const from = (location.state as { from?: string } | null)?.from;
       const fallback = res.user.role === "super_admin" ? "/" : "/leads";
       navigate(from && from !== "/signin" ? from : fallback, { replace: true });
-    } else {
-      setError(res.error);
+      return;
     }
+    setError(res.error);
   };
 
   const fillDemo = (em: string, pw: string) => {
