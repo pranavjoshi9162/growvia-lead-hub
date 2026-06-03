@@ -306,8 +306,81 @@ export default function AllLeads() {
         </div>
       </section>
 
-      {/* Filters */}
-      <div ref={filterToolbarRef} className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center gap-2 scroll-mt-[5.5rem]">
+      {/* Mobile toolbar (search + filter sheet + add) */}
+      <div ref={filterToolbarRef} className="md:hidden flex items-center gap-2 scroll-mt-[5.5rem]">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input className="pl-9 h-11" placeholder="Search leads..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="h-11 w-11 p-0 shrink-0" aria-label="Filters">
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+            </SheetHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Source</label>
+                <Select value={source} onValueChange={setSource}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="All Sources" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sources</SelectItem>
+                    {SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Status</label>
+                <Select value={status} onValueChange={setStatusF}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="All Statuses" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    {LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{leadStatusDisplay(s)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Lead Potential</label>
+                <Select value={potential} onValueChange={setPotential}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="All Potential" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Potential</SelectItem>
+                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Assigned Salesperson</label>
+                <Select value={assigned} onValueChange={setAssigned}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="All Sales" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sales</SelectItem>
+                    {SALES_PEOPLE.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <label className="flex items-center gap-2 px-3 py-3 rounded-md border border-border cursor-pointer hover:bg-secondary text-sm min-h-[44px]">
+                <Checkbox checked={dueToday} onCheckedChange={(v) => setDueToday(!!v)} />
+                Due Today
+              </label>
+            </div>
+            <SheetFooter>
+              <Button variant="outline" onClick={clearAll} className="h-11 flex-1">Clear all</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+        <Button onClick={() => setAddOpen(true)} className="h-11 w-11 p-0 shrink-0" aria-label="Add lead">
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Desktop Filters */}
+      <div className="hidden md:flex rounded-xl border border-border bg-card p-3 flex-wrap items-center gap-2 scroll-mt-[5.5rem]">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Search leads, business, phone..." value={search} onChange={(e) => setSearch(e.target.value)} />
