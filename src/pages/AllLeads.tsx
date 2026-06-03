@@ -452,8 +452,95 @@ export default function AllLeads() {
         ))}
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      {/* Mobile lead cards */}
+      <div className="md:hidden space-y-3">
+        {filtered.length === 0 && (
+          <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+            No leads match your filters.
+          </div>
+        )}
+        {filtered.map((l) => {
+          const v = nextVisit(l);
+          return (
+            <div key={l.id} className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-foreground truncate">{l.name}</div>
+                  <div className="text-sm text-foreground/80 truncate">{l.business}</div>
+                  <a href={`tel:${l.phone}`} className="inline-flex items-center gap-1 text-xs text-primary mt-0.5">
+                    <Phone className="h-3 w-3" /> {l.phone}
+                  </a>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="icon" variant="ghost" className="h-11 w-11 shrink-0" aria-label="Actions">
+                      <MoreHorizontal className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-popover">
+                    <DropdownMenuItem onClick={() => setEditLead(l)}>
+                      <Edit className="h-4 w-4 mr-2" /> Edit Lead
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setVisitDialog({ open: true, lead: l })}>
+                      <MapPin className="h-4 w-4 mr-2" /> Schedule Visit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setStatusDialog({ open: true, lead: l, initial: "Contacted", initialSubstatus: "Follow-up Pending", title: "Schedule Follow-up" })
+                      }
+                    >
+                      <CalendarPlus className="h-4 w-4 mr-2" /> Schedule Follow-up
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setStatusDialog({ open: true, lead: l, initial: "Converted", initialSubstatus: "Monthly Plan", title: "Mark Sale Done" })
+                      }
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-success" /> Mark Sale Done
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setStatusDialog({ open: true, lead: l, initial: "Lost", initialSubstatus: "Not Interested", title: "Mark Lost" })
+                      }
+                    >
+                      <XCircle className="h-4 w-4 mr-2 text-destructive" /> Mark Lost
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <Badge variant="outline" className={statusColor[l.status]}>{leadStatusDisplay(l.status)}</Badge>
+                {l.substatus && (
+                  <span className="text-[11px] text-muted-foreground border border-border rounded px-1.5 py-0.5">{l.substatus}</span>
+                )}
+              </div>
+
+              <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                <dt className="text-muted-foreground">Assigned</dt>
+                <dd className="text-foreground text-right truncate">{l.assignedTo}</dd>
+                <dt className="text-muted-foreground">Next follow-up</dt>
+                <dd className="text-foreground text-right">{l.nextFollowUp ? format(new Date(l.nextFollowUp), "dd MMM") : "—"}</dd>
+                <dt className="text-muted-foreground">Next visit</dt>
+                <dd className="text-foreground text-right">
+                  {v ? (isToday(new Date(v.date)) ? <span className="text-warning font-medium">Today</span> : format(new Date(v.date), "dd MMM")) : "—"}
+                </dd>
+              </dl>
+
+              <Button
+                className="mt-4 w-full h-11"
+                onClick={() => setStatusDialog({ open: true, lead: l, title: "Change Status" })}
+              >
+                Change Status
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Table (desktop) */}
+      <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-secondary/60">
