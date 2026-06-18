@@ -13,9 +13,8 @@ import { useLeads } from "@/context/LeadsContext";
 import { toast } from "sonner";
 import {
   CreditCard, Building2, MapPin, Receipt, Rocket, CheckCircle2, Copy, Send,
-  Sparkles, QrCode, IndianRupee, Plus, Trash2,
+  Sparkles, QrCode, IndianRupee,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface Props {
   lead: Lead;
