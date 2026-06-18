@@ -36,7 +36,7 @@ interface Props {
   editingLead?: Lead | null;
 }
 
-type TabKey = "quick" | "detailed" | "sales" | "visits" | "notes";
+type TabKey = "quick" | "detailed" | "sales" | "visits" | "notes" | "setup";
 
 interface Outlet {
   name: string;
