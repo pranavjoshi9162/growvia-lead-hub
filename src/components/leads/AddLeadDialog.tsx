@@ -15,9 +15,10 @@ import { useLeads } from "@/context/LeadsContext";
 import { toast } from "sonner";
 import {
   Zap, FileText, User2, Building2, Settings2, MessagesSquare,
-  Activity, MapPin, Plus, Trash2, ChevronsUpDown,
+  Activity, MapPin, Plus, Trash2, ChevronsUpDown, Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CustomerSetupTab } from "./CustomerSetupTab";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
