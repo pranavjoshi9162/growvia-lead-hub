@@ -642,23 +642,35 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
           </div>
         )}
 
-        <DialogFooter className="px-6 py-4 border-t bg-muted/30 gap-2">
-          <Button variant="outline" onClick={close}>
-            Cancel
-          </Button>
-          {isEdit ? (
-            <Button onClick={saveAll}>Update Lead</Button>
-          ) : tab === "quick" ? (
-            <>
-              <Button variant="secondary" onClick={() => saveQuick(true)}>
-                Save & Add Visit
-              </Button>
-              <Button onClick={() => saveQuick(false)}>Save Lead</Button>
-            </>
-          ) : (
-            <Button onClick={saveAll}>Save Lead</Button>
-          )}
-        </DialogFooter>
+        {/* CUSTOMER SETUP */}
+        {tab === "setup" && isEdit && editingLead && (
+          <CustomerSetupTab lead={editingLead} />
+        )}
+
+        {tab !== "setup" && (
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30 gap-2">
+            <Button variant="outline" onClick={close}>
+              Cancel
+            </Button>
+            {isEdit ? (
+              <Button onClick={saveAll}>Update Lead</Button>
+            ) : tab === "quick" ? (
+              <>
+                <Button variant="secondary" onClick={() => saveQuick(true)}>
+                  Save & Add Visit
+                </Button>
+                <Button onClick={() => saveQuick(false)}>Save Lead</Button>
+              </>
+            ) : (
+              <Button onClick={saveAll}>Save Lead</Button>
+            )}
+          </DialogFooter>
+        )}
+        {tab === "setup" && (
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30">
+            <Button variant="outline" onClick={close}>Close</Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
