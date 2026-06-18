@@ -132,6 +132,57 @@ export type DemoType = "Onsite" | "Online" | "Phone";
 export const BUSINESS_TYPES: BusinessType[] = ["Restaurant", "Salon", "Bar", "Cafe", "Gym", "Other"];
 export const DEMO_TYPES: DemoType[] = ["Onsite", "Online", "Phone"];
 
+export type SubscriptionType = "Trial" | "Monthly" | "Yearly";
+export type CustomerSetupStatus = "Pending" | "In Progress" | "Completed";
+export type PaymentMethod = "Online Payment" | "QR Payment" | "Payment Received";
+
+export interface CustomerSetupOutlet {
+  name: string;
+  googleLocation: string;
+  address: string;
+}
+
+export interface CustomerSetup {
+  status: CustomerSetupStatus;
+  subscriptionType?: SubscriptionType;
+  trialDuration?: "7 Days" | "14 Days" | "30 Days" | "Custom";
+  trialDays?: number;
+  planMode?: "Existing" | "New";
+  existingPlan?: string;
+  planPrice?: number;
+  newPlanName?: string;
+  newPlanPrice?: number;
+  newPlanCycle?: "Monthly" | "Yearly";
+  newPlanDescription?: string;
+  outletsPurchased?: number;
+  ownerName?: string;
+  email?: string;
+  phone?: string;
+  businessName?: string;
+  businessType?: BusinessType;
+  country?: string;
+  state?: string;
+  city?: string;
+  address?: string;
+  website?: string;
+  outlets?: CustomerSetupOutlet[];
+  paymentMethod?: PaymentMethod;
+  paymentAmount?: number;
+  paymentCompleted?: boolean;
+  workspaceCreated?: boolean;
+  workspaceName?: string;
+  loginUrl?: string;
+  loginEmail?: string;
+  tempPassword?: string;
+  createdAt?: string;
+}
+
+export const AVAILABLE_PLANS: { name: string; price: number }[] = [
+  { name: "Silver", price: 2999 },
+  { name: "Gold", price: 7999 },
+  { name: "Platinum", price: 14999 },
+];
+
 export interface Lead {
   id: string;
   name: string;
@@ -158,6 +209,7 @@ export interface Lead {
   demoType?: DemoType;
   demoDate?: string;
   demoOutcome?: string;
+  customerSetup?: CustomerSetup;
 }
 
 const today = new Date();

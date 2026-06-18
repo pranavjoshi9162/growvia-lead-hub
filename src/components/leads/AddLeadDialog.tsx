@@ -15,9 +15,10 @@ import { useLeads } from "@/context/LeadsContext";
 import { toast } from "sonner";
 import {
   Zap, FileText, User2, Building2, Settings2, MessagesSquare,
-  Activity, MapPin, Plus, Trash2, ChevronsUpDown,
+  Activity, MapPin, Plus, Trash2, ChevronsUpDown, Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CustomerSetupTab } from "./CustomerSetupTab";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -35,7 +36,7 @@ interface Props {
   editingLead?: Lead | null;
 }
 
-type TabKey = "quick" | "detailed" | "sales" | "visits" | "notes";
+type TabKey = "quick" | "detailed" | "sales" | "visits" | "notes" | "setup";
 
 interface Outlet {
   name: string;
@@ -82,12 +83,13 @@ const detailedInitial = {
   visitNotes: "",
 };
 
-const TABS: { key: TabKey; label: string; icon: any }[] = [
+const TABS: { key: TabKey; label: string; icon: any; editOnly?: boolean }[] = [
   { key: "quick", label: "Quick Lead", icon: Zap },
   { key: "detailed", label: "Detailed Form", icon: FileText },
   { key: "sales", label: "Sales / Pipeline", icon: Activity },
   { key: "visits", label: "Visits", icon: MapPin },
   { key: "notes", label: "Discussion & Notes", icon: MessagesSquare },
+  { key: "setup", label: "Customer Setup", icon: Rocket, editOnly: true },
 ];
 
 function TabHeader({ icon: Icon, title, subtitle }: { icon: any; title: string; subtitle?: string }) {
@@ -388,7 +390,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
 
           {/* Tabs */}
           <div className="mt-4 flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1 self-start">
-            {TABS.map((t) => {
+            {TABS.filter((t) => !t.editOnly || isEdit).map((t) => {
               const Icon = t.icon;
               const active = tab === t.key;
               return (
@@ -640,23 +642,35 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
           </div>
         )}
 
-        <DialogFooter className="px-6 py-4 border-t bg-muted/30 gap-2">
-          <Button variant="outline" onClick={close}>
-            Cancel
-          </Button>
-          {isEdit ? (
-            <Button onClick={saveAll}>Update Lead</Button>
-          ) : tab === "quick" ? (
-            <>
-              <Button variant="secondary" onClick={() => saveQuick(true)}>
-                Save & Add Visit
-              </Button>
-              <Button onClick={() => saveQuick(false)}>Save Lead</Button>
-            </>
-          ) : (
-            <Button onClick={saveAll}>Save Lead</Button>
-          )}
-        </DialogFooter>
+        {/* CUSTOMER SETUP */}
+        {tab === "setup" && isEdit && editingLead && (
+          <CustomerSetupTab lead={editingLead} />
+        )}
+
+        {tab !== "setup" && (
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30 gap-2">
+            <Button variant="outline" onClick={close}>
+              Cancel
+            </Button>
+            {isEdit ? (
+              <Button onClick={saveAll}>Update Lead</Button>
+            ) : tab === "quick" ? (
+              <>
+                <Button variant="secondary" onClick={() => saveQuick(true)}>
+                  Save & Add Visit
+                </Button>
+                <Button onClick={() => saveQuick(false)}>Save Lead</Button>
+              </>
+            ) : (
+              <Button onClick={saveAll}>Save Lead</Button>
+            )}
+          </DialogFooter>
+        )}
+        {tab === "setup" && (
+          <DialogFooter className="px-6 py-4 border-t bg-muted/30">
+            <Button variant="outline" onClick={close}>Close</Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
