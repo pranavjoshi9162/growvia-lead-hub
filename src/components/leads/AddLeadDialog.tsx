@@ -83,12 +83,13 @@ const detailedInitial = {
   visitNotes: "",
 };
 
-const TABS: { key: TabKey; label: string; icon: any }[] = [
+const TABS: { key: TabKey; label: string; icon: any; editOnly?: boolean }[] = [
   { key: "quick", label: "Quick Lead", icon: Zap },
   { key: "detailed", label: "Detailed Form", icon: FileText },
   { key: "sales", label: "Sales / Pipeline", icon: Activity },
   { key: "visits", label: "Visits", icon: MapPin },
   { key: "notes", label: "Discussion & Notes", icon: MessagesSquare },
+  { key: "setup", label: "Customer Setup", icon: Rocket, editOnly: true },
 ];
 
 function TabHeader({ icon: Icon, title, subtitle }: { icon: any; title: string; subtitle?: string }) {
