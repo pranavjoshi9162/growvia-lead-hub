@@ -15,11 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { useLeads } from "@/context/LeadsContext";
+import { useAuth } from "@/context/AuthContext";
 import { LEAD_STATUSES, LeadStatus, SOURCES, SALES_PEOPLE, Lead, leadStatusDisplay } from "@/lib/sampleData";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { StatusUpdateDialog } from "@/components/leads/StatusUpdateDialog";
 import { ScheduleVisitDialog } from "@/components/leads/ScheduleVisitDialog";
 import { LeadTimeline } from "@/components/leads/LeadTimeline";
+import { History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MetricCard, GLASS_SURFACES } from "@/components/dashboard/MetricCard";
 import { DateFilter, DateRange } from "@/components/dashboard/DateFilter";
