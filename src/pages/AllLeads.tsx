@@ -665,6 +665,15 @@ export default function AllLeads() {
                               >
                                 <CalendarPlus className="h-4 w-4 mr-2" /> Schedule Follow-up
                               </DropdownMenuItem>
+                              {isAdmin && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setStatusDialog({ open: true, lead: l, editLastMode: true, title: "Edit Last Status" })
+                                  }
+                                >
+                                  <History className="h-4 w-4 mr-2" /> Edit Last Status
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() =>
