@@ -20,25 +20,30 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   lead: Lead | null;
-  /** Pre-select main status (e.g. quick actions from row menu). */
   initialStatus?: LeadStatus;
-  /** When set with initialStatus, picks this substatus if valid for that stage. */
   initialSubstatus?: string;
   title?: string;
+  /** When true, edits the most recent status entry in place instead of creating a new one. */
+  editLastMode?: boolean;
 }
 
-function followUpInputValue(iso?: string) {
+function dateInputValue(iso?: string) {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
 }
 
-export function StatusUpdateDialog({ open, onOpenChange, lead, initialStatus, initialSubstatus, title }: Props) {
-  const { setStatus } = useLeads();
+function todayInput() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function StatusUpdateDialog({ open, onOpenChange, lead, initialStatus, initialSubstatus, title, editLastMode }: Props) {
+  const { setStatus, editLastStatus } = useLeads();
   const [status, setStatusLocal] = useState<LeadStatus>("Contacted");
   const [substatus, setSubstatus] = useState("");
   const [assignedTo, setAssignedTo] = useState(SALES_PEOPLE[0]);
+  const [statusDate, setStatusDate] = useState(todayInput());
   const [followUp, setFollowUp] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -51,18 +56,20 @@ export function StatusUpdateDialog({ open, onOpenChange, lead, initialStatus, in
     const subs = SUBSTATUS_MAP[st] ?? [];
     let nextSub = "";
     if (initialSubstatus && subs.includes(initialSubstatus)) nextSub = initialSubstatus;
-    else if (
-      lead.substatus &&
-      subs.includes(lead.substatus) &&
-      (!initialStatus || initialStatus === lead.status)
-    )
-      nextSub = lead.substatus;
+    else if (lead.substatus && subs.includes(lead.substatus) && (!initialStatus || initialStatus === lead.status)) nextSub = lead.substatus;
     else nextSub = subs[0] ?? "";
     setSubstatus(nextSub);
     setAssignedTo(lead.assignedTo || SALES_PEOPLE[0]);
-    setFollowUp(followUpInputValue(lead.nextFollowUp));
+    setFollowUp(dateInputValue(lead.nextFollowUp));
     setNotes("");
-  }, [open, lead, initialStatus, initialSubstatus]);
+    if (editLastMode) {
+      // Default to last status entry's statusDate
+      const last = [...lead.timeline].reverse().find((e) => e.kind === "status");
+      setStatusDate(dateInputValue(last?.statusDate || last?.timestamp) || todayInput());
+    } else {
+      setStatusDate(todayInput());
+    }
+  }, [open, lead, initialStatus, initialSubstatus, editLastMode]);
 
   useEffect(() => {
     if (!subOptions.length) {
@@ -74,16 +81,34 @@ export function StatusUpdateDialog({ open, onOpenChange, lead, initialStatus, in
 
   if (!lead) return null;
 
-  const dialogTitle = title ?? "Change Status";
+  const dialogTitle = title ?? (editLastMode ? "Edit Last Status" : "Change Status");
 
   const submit = () => {
-    if (!substatus && subOptions.length) {
+    if (subOptions.length && !substatus) {
       toast.error("Select a substatus");
       return;
     }
     const followIso = followUp ? new Date(followUp).toISOString() : null;
-    setStatus(lead.id, status, substatus || undefined, notes || undefined, followIso, assignedTo);
-    toast.success("Status updated");
+    const statusIso = statusDate ? new Date(statusDate).toISOString() : new Date().toISOString();
+    if (editLastMode) {
+      editLastStatus(lead.id, {
+        status,
+        substatus: substatus || undefined,
+        statusDate: statusIso,
+        followUpDate: followIso,
+        notes,
+      });
+      toast.success("Last status updated");
+    } else {
+      setStatus(lead.id, status, {
+        substatus: substatus || undefined,
+        notes,
+        followUpDate: followIso,
+        assignedTo,
+        statusDate: statusIso,
+      });
+      toast.success("Status updated");
+    }
     onOpenChange(false);
   };
 
@@ -98,62 +123,63 @@ export function StatusUpdateDialog({ open, onOpenChange, lead, initialStatus, in
           <div className="space-y-1.5">
             <Label>Main Status</Label>
             <Select value={status} onValueChange={(v) => setStatusLocal(v as LeadStatus)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {LEAD_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {leadStatusDisplay(s)}
-                  </SelectItem>
+                  <SelectItem key={s} value={s}>{leadStatusDisplay(s)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <Label>Substatus</Label>
-            <Select value={substatus || undefined} onValueChange={setSubstatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select substatus" />
-              </SelectTrigger>
-              <SelectContent>
-                {subOptions.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+          {subOptions.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Substatus</Label>
+              <Select value={substatus || undefined} onValueChange={setSubstatus}>
+                <SelectTrigger><SelectValue placeholder="Select substatus" /></SelectTrigger>
+                <SelectContent>
+                  {subOptions.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Status Date</Label>
+              <Input type="date" value={statusDate} onChange={(e) => setStatusDate(e.target.value)} />
+              <p className="text-[11px] text-muted-foreground">When this status actually happened.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Follow-up Date <span className="text-muted-foreground font-normal">(Optional)</span></Label>
+              <Input type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Assigned Salesperson</Label>
-            <Select value={assignedTo} onValueChange={setAssignedTo}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SALES_PEOPLE.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Follow-up Date</Label>
-            <Input type="date" value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
-          </div>
+
+          {!editLastMode && (
+            <div className="space-y-1.5">
+              <Label>Assigned Salesperson</Label>
+              <Select value={assignedTo} onValueChange={setAssignedTo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SALES_PEOPLE.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>Notes</Label>
             <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional update notes…" />
           </div>
         </div>
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={submit}>Save</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit}>{editLastMode ? "Save Correction" : "Save"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
