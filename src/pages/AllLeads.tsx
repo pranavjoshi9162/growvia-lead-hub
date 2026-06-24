@@ -41,6 +41,8 @@ const info = "bg-info-soft text-info border-info/30";
 
 export default function AllLeads() {
   const { leads } = useLeads();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin";
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("all");
   const [status, setStatusF] = useState("all");
