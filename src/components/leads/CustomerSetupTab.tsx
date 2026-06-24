@@ -153,7 +153,7 @@ export function CustomerSetupTab({ lead }: Props) {
     });
 
     if (cs.subscriptionType === "Trial") {
-      setStatus(lead.id, "Trial", "Trial Started", "Customer Setup: Trial workspace created");
+      setStatus(lead.id, "Trial", { substatus: "Trial Started", notes: "Customer Setup: Trial workspace created" });
     } else {
       appendTimeline(lead.id, {
         kind: "status",

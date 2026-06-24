@@ -15,11 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { useLeads } from "@/context/LeadsContext";
+import { useAuth } from "@/context/AuthContext";
 import { LEAD_STATUSES, LeadStatus, SOURCES, SALES_PEOPLE, Lead, leadStatusDisplay } from "@/lib/sampleData";
 import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { StatusUpdateDialog } from "@/components/leads/StatusUpdateDialog";
 import { ScheduleVisitDialog } from "@/components/leads/ScheduleVisitDialog";
 import { LeadTimeline } from "@/components/leads/LeadTimeline";
+import { History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MetricCard, GLASS_SURFACES } from "@/components/dashboard/MetricCard";
 import { DateFilter, DateRange } from "@/components/dashboard/DateFilter";
@@ -39,6 +41,8 @@ const info = "bg-info-soft text-info border-info/30";
 
 export default function AllLeads() {
   const { leads } = useLeads();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "super_admin";
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("all");
   const [status, setStatusF] = useState("all");
@@ -69,6 +73,7 @@ export default function AllLeads() {
     initial?: LeadStatus;
     initialSubstatus?: string;
     title?: string;
+    editLastMode?: boolean;
   }>({ open: false, lead: null });
   const [visitDialog, setVisitDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -491,6 +496,13 @@ export default function AllLeads() {
                     >
                       <CalendarPlus className="h-4 w-4 mr-2" /> Schedule Follow-up
                     </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem
+                        onClick={() => setStatusDialog({ open: true, lead: l, editLastMode: true, title: "Edit Last Status" })}
+                      >
+                        <History className="h-4 w-4 mr-2" /> Edit Last Status
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() =>
@@ -653,6 +665,15 @@ export default function AllLeads() {
                               >
                                 <CalendarPlus className="h-4 w-4 mr-2" /> Schedule Follow-up
                               </DropdownMenuItem>
+                              {isAdmin && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setStatusDialog({ open: true, lead: l, editLastMode: true, title: "Edit Last Status" })
+                                  }
+                                >
+                                  <History className="h-4 w-4 mr-2" /> Edit Last Status
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() =>
@@ -762,6 +783,7 @@ export default function AllLeads() {
         initialStatus={statusDialog.initial}
         initialSubstatus={statusDialog.initialSubstatus}
         title={statusDialog.title}
+        editLastMode={statusDialog.editLastMode}
       />
       <ScheduleVisitDialog
         open={visitDialog.open}

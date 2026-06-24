@@ -48,17 +48,21 @@ interface Outlet {
 
 const newOutlet = (): Outlet => ({ name: "", address: "", mapsLink: "", city: "", state: "" });
 
+const todayInput = () => new Date().toISOString().slice(0, 10);
+
 const quickInitial = {
   name: "",
   phone: "",
   business: "",
   address: "",
   assignedTo: DEFAULT_LOGGED_IN_SALES_REP,
+  leadDate: todayInput(),
 };
 
 const detailedInitial = {
   // basic
   name: "", phone: "", email: "",
+  leadDate: todayInput(),
   // business
   business: "", businessType: "" as BusinessType | "",
   outlets: [newOutlet()] as Outlet[],
@@ -68,10 +72,10 @@ const detailedInitial = {
   monthlyCustomers: "", revenueRange: "",
   // notes
   clientNotes: "", adminNotes: "",
-  // sales
+  // sales (create-only)
   source: SOURCES[0],
   status: "New Lead" as LeadStatus,
-  substatus: "Manual Entry",
+  substatus: "",
   nextFollowUp: "",
   assignedTo: SALES_PEOPLE[0],
   conversionStatus: "" as "" | "In Pipeline" | "converted" | "Lost",
@@ -83,10 +87,10 @@ const detailedInitial = {
   visitNotes: "",
 };
 
-const TABS: { key: TabKey; label: string; icon: any; editOnly?: boolean }[] = [
+const TABS: { key: TabKey; label: string; icon: any; editOnly?: boolean; createOnly?: boolean }[] = [
   { key: "quick", label: "Quick Lead", icon: Zap },
   { key: "detailed", label: "Detailed Form", icon: FileText },
-  { key: "sales", label: "Sales / Pipeline", icon: Activity },
+  { key: "sales", label: "Sales / Pipeline", icon: Activity, createOnly: true },
   { key: "visits", label: "Visits", icon: MapPin },
   { key: "notes", label: "Discussion & Notes", icon: MessagesSquare },
   { key: "setup", label: "Customer Setup", icon: Rocket, editOnly: true },
@@ -188,6 +192,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
         business: editingLead.business,
         address: editingLead.outletAddress ?? "",
         assignedTo: editingLead.assignedTo,
+        leadDate: editingLead.createdAt ? new Date(editingLead.createdAt).toISOString().slice(0, 10) : todayInput(),
       });
       const src = SOURCES.includes(editingLead.source) ? editingLead.source : SOURCES[0];
       const subs = SUBSTATUS_MAP[editingLead.status] ?? [];
@@ -200,6 +205,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
         name: editingLead.name,
         phone: editingLead.phone,
         email: editingLead.email,
+        leadDate: editingLead.createdAt ? new Date(editingLead.createdAt).toISOString().slice(0, 10) : todayInput(),
         business: editingLead.business,
         businessType: editingLead.businessType ?? "",
         outlets: primaryOutlet,
@@ -261,6 +267,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
       toast.info("Now schedule the visit");
       return;
     }
+    const createdAt = quick.leadDate ? new Date(quick.leadDate).toISOString() : new Date().toISOString();
     addLead({
       name: quick.name.trim(),
       phone: quick.phone.trim(),
@@ -269,11 +276,12 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
       source: "Manual Entry",
       potential: "High",
       status: "New Lead",
-      substatus: "Manual Entry",
+      substatus: undefined,
       assignedTo: quick.assignedTo,
       outletAddress: quick.address.trim() || undefined,
+      createdAt,
     });
-    toast.success("Lead added — New Lead · Manual Entry");
+    toast.success("Lead added — New Lead");
     close();
   };
 
@@ -318,15 +326,12 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
       .filter(Boolean)
       .join("\n") || undefined;
 
-    const patch: Partial<Lead> = {
+    const patchBase: Partial<Lead> = {
       name: f.name.trim() || "Unnamed Lead",
       phone: f.phone.trim(),
       email: f.email.trim(),
       business: f.business.trim() || "—",
       source: f.source,
-      status: f.status,
-      substatus: f.substatus || undefined,
-      nextFollowUp: f.nextFollowUp ? new Date(f.nextFollowUp).toISOString() : undefined,
       assignedTo: f.assignedTo,
       outletAddress: address || undefined,
       outletsCount: f.outletsCount ? Number(f.outletsCount) : undefined,
@@ -338,7 +343,10 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
     };
 
     if (isEdit && editingLead) {
-      updateLead(editingLead.id, { ...patch, potential: editingLead.potential });
+      // Edit Lead must NOT change pipeline status, substatus or follow-up date.
+      // Those live in the Change Status flow and are the source of truth for timeline history.
+      const createdAt = f.leadDate ? new Date(f.leadDate).toISOString() : editingLead.createdAt;
+      updateLead(editingLead.id, { ...patchBase, potential: editingLead.potential, createdAt });
       if (f.visitDate) {
         const dateIso = new Date(`${f.visitDate}T${f.visitTime || "10:00"}`).toISOString();
         scheduleVisit(editingLead.id, {
@@ -354,10 +362,18 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
       return;
     }
 
+    const createPatch: Partial<Lead> = {
+      ...patchBase,
+      status: f.status,
+      substatus: f.substatus || undefined,
+      nextFollowUp: f.nextFollowUp ? new Date(f.nextFollowUp).toISOString() : undefined,
+    };
+    const createdAt = f.leadDate ? new Date(f.leadDate).toISOString() : new Date().toISOString();
     const newId = addLead({
-      ...(patch as Parameters<typeof addLead>[0]),
+      ...(createPatch as Parameters<typeof addLead>[0]),
       potential: "High" as Potential,
       notes: undefined,
+      createdAt,
     });
 
     if (f.visitDate) {
@@ -390,7 +406,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
 
           {/* Tabs */}
           <div className="mt-4 flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1 self-start">
-            {TABS.filter((t) => !t.editOnly || isEdit).map((t) => {
+            {TABS.filter((t) => (!t.editOnly || isEdit) && (!t.createOnly || !isEdit)).map((t) => {
               const Icon = t.icon;
               const active = tab === t.key;
               return (
@@ -428,26 +444,30 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
                   <Label>Business Name *</Label>
                   <Input value={quick.business} onChange={(e) => updateQ("business", e.target.value)} placeholder="Spice Route Restaurant" />
                 </div>
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label>Address</Label>
-                    <Input value={quick.address} onChange={(e) => updateQ("address", e.target.value)} placeholder="Adajan, Surat" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Assigned To</Label>
-                    <AssignedToCombobox
-                      value={quick.assignedTo}
-                      onChange={(v) => updateQ("assignedTo", v)}
-                      options={ACTIVE_SALES_TEAM}
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label>Lead Date</Label>
+                  <Input type="date" value={quick.leadDate} onChange={(e) => updateQ("leadDate", e.target.value)} />
+                  <p className="text-[11px] text-muted-foreground">When the lead actually came in.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Address</Label>
+                  <Input value={quick.address} onChange={(e) => updateQ("address", e.target.value)} placeholder="Adajan, Surat" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Assigned To</Label>
+                  <AssignedToCombobox
+                    value={quick.assignedTo}
+                    onChange={(v) => updateQ("assignedTo", v)}
+                    options={ACTIVE_SALES_TEAM}
+                  />
                 </div>
               </div>
 
-              <div className="mt-4 rounded-lg bg-primary/[0.04] border border-primary/15 px-3 py-2 text-xs text-muted-foreground">
-                Will auto-assign status <span className="font-medium text-foreground">New Lead</span> ·{" "}
-                <span className="font-medium text-foreground">Manual Entry</span>
-              </div>
+              {!isEdit && (
+                <div className="mt-4 rounded-lg bg-primary/[0.04] border border-primary/15 px-3 py-2 text-xs text-muted-foreground">
+                  Will auto-assign status <span className="font-medium text-foreground">New Lead</span>
+                </div>
+              )}
             </section>
           </div>
         )}
@@ -465,6 +485,18 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
                     <div className="space-y-1.5"><Label>Client Name</Label><Input value={form.name} onChange={(e) => updateD("name", e.target.value)} /></div>
                     <div className="space-y-1.5"><Label>Phone Number</Label><Input value={form.phone} onChange={(e) => updateD("phone", e.target.value)} /></div>
                     <div className="space-y-1.5 md:col-span-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => updateD("email", e.target.value)} /></div>
+                    <div className="space-y-1.5">
+                      <Label>Lead Date</Label>
+                      <Input type="date" value={form.leadDate} onChange={(e) => updateD("leadDate", e.target.value)} />
+                      <p className="text-[11px] text-muted-foreground">When the lead actually came in.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Lead Source</Label>
+                      <Select value={form.source} onValueChange={(v) => updateD("source", v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>

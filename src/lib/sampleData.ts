@@ -23,14 +23,9 @@ export const LEAD_STATUSES: LeadStatus[] = [
 ];
 
 export const SUBSTATUS_MAP: Record<LeadStatus, string[]> = {
-  "New Lead": [
-    "Website Inquiry",
-    "Referral",
-    "SEO Lead",
-    "Instagram Lead",
-    "YouTube Lead",
-    "Manual Entry",
-  ],
+  // "New Lead" has no substatus — the Source is the channel of origin
+  // and stays permanent on the lead. Avoid duplicating it as a substatus.
+  "New Lead": [],
   Contacted: [
     "Cold Call",
     "Callback Later",
@@ -117,13 +112,22 @@ export interface TimelineEntry {
   id: string;
   timestamp: string;
   kind?: TimelineKind;
+  /** "created" marker for the Lead Created event, distinct from a status change. */
+  event?: "created" | "status_change" | "visit" | "note";
   status?: LeadStatus;
   substatus?: string;
+  /** When this status / event actually happened (may differ from `timestamp` which is record time). */
+  statusDate?: string;
+  /** Previous status / substatus, populated on status changes for human-readable diffs. */
+  prevStatus?: LeadStatus;
+  prevSubstatus?: string;
   notes?: string;
   followUpDate?: string;
   visitType?: VisitType;
   visitStatus?: VisitStatus;
   assignedTo?: string;
+  /** Name of the user who logged this entry. */
+  actor?: string;
 }
 
 export type BusinessType = "Restaurant" | "Salon" | "Bar" | "Cafe" | "Gym" | "Other";
@@ -240,7 +244,7 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "v1", type: "Demo Visit", date: d(2), assignedTo: "Omii Jariwala", status: "Scheduled", notes: "Demo at outlet" },
     ],
     timeline: [
-      { id: "t1", kind: "status", status: "New Lead", substatus: "Website Inquiry", timestamp: d(-12), notes: "Came from website contact form." },
+      { id: "t1", kind: "status", status: "New Lead", timestamp: d(-12), notes: "Came from website contact form." },
       { id: "t2", kind: "call", status: "Contacted", substatus: "Interested", timestamp: d(-10), notes: "Intro call done, sent pricing." },
       { id: "t3", kind: "status", status: "Demo", substatus: "Demo Scheduled", timestamp: d(-1), followUpDate: d(2) },
       { id: "t4", kind: "visit", visitType: "Demo Visit", visitStatus: "Scheduled", assignedTo: "Omii Jariwala", timestamp: d(-1), notes: "Demo scheduled at outlet" },
@@ -265,7 +269,7 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "v1", type: "Demo Visit", date: d(-2), assignedTo: "Priya Shah", status: "Completed", notes: "Owner liked loyalty module" },
     ],
     timeline: [
-      { id: "t1", kind: "status", status: "New Lead", substatus: "Referral", timestamp: d(-20) },
+      { id: "t1", kind: "status", status: "New Lead", timestamp: d(-20) },
       { id: "t2", kind: "call", status: "Contacted", substatus: "Interested", timestamp: d(-18), notes: "Referred by Tulsi Restaurant." },
       { id: "t3", kind: "status", status: "Demo", substatus: "Demo Scheduled", timestamp: d(-10) },
       { id: "t4", kind: "visit", visitType: "Demo Visit", visitStatus: "Completed", assignedTo: "Priya Shah", timestamp: d(-2), notes: "Demo done at cafe" },
@@ -288,7 +292,7 @@ export const SAMPLE_LEADS: Lead[] = [
     assignedTo: "Rahul Mehta",
     createdAt: d(-8),
     timeline: [
-      { id: "t1", kind: "status", status: "New Lead", substatus: "Manual Entry", timestamp: d(-8) },
+      { id: "t1", kind: "status", status: "New Lead", timestamp: d(-8) },
       { id: "t2", kind: "call", status: "Contacted", substatus: "Follow-up Pending", timestamp: d(-2), followUpDate: d(0), notes: "Budget concern, callback today" },
     ],
   },
@@ -332,7 +336,7 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "v1", type: "Cold Visit", date: d(1), assignedTo: "Omii Jariwala", status: "Scheduled", notes: "First visit" },
     ],
     timeline: [
-      { id: "t1", kind: "status", status: "New Lead", substatus: "SEO Lead", timestamp: d(-5) },
+      { id: "t1", kind: "status", status: "New Lead", timestamp: d(-5) },
       { id: "t2", kind: "status", status: "Visit", substatus: "Visit Scheduled", timestamp: d(-1), followUpDate: d(3) },
       { id: "t3", kind: "visit", visitType: "Cold Visit", visitStatus: "Scheduled", assignedTo: "Omii Jariwala", timestamp: d(-1), notes: "Visit planned" },
     ],
@@ -388,12 +392,11 @@ export const SAMPLE_LEADS: Lead[] = [
     source: "Website Inquiry",
     potential: "Low",
     status: "New Lead",
-    substatus: "Website Inquiry",
     nextFollowUp: d(0),
     assignedTo: "Rahul Mehta",
     createdAt: d(-1),
     timeline: [
-      { id: "t1", kind: "status", status: "New Lead", substatus: "Website Inquiry", timestamp: d(-1), followUpDate: d(0) },
+      { id: "t1", kind: "status", status: "New Lead", timestamp: d(-1), followUpDate: d(0) },
     ],
   },
 ];
