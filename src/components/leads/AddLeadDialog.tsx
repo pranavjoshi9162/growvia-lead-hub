@@ -48,17 +48,21 @@ interface Outlet {
 
 const newOutlet = (): Outlet => ({ name: "", address: "", mapsLink: "", city: "", state: "" });
 
+const todayInput = () => new Date().toISOString().slice(0, 10);
+
 const quickInitial = {
   name: "",
   phone: "",
   business: "",
   address: "",
   assignedTo: DEFAULT_LOGGED_IN_SALES_REP,
+  leadDate: todayInput(),
 };
 
 const detailedInitial = {
   // basic
   name: "", phone: "", email: "",
+  leadDate: todayInput(),
   // business
   business: "", businessType: "" as BusinessType | "",
   outlets: [newOutlet()] as Outlet[],
@@ -68,10 +72,10 @@ const detailedInitial = {
   monthlyCustomers: "", revenueRange: "",
   // notes
   clientNotes: "", adminNotes: "",
-  // sales
+  // sales (create-only)
   source: SOURCES[0],
   status: "New Lead" as LeadStatus,
-  substatus: "Manual Entry",
+  substatus: "",
   nextFollowUp: "",
   assignedTo: SALES_PEOPLE[0],
   conversionStatus: "" as "" | "In Pipeline" | "converted" | "Lost",
@@ -83,10 +87,10 @@ const detailedInitial = {
   visitNotes: "",
 };
 
-const TABS: { key: TabKey; label: string; icon: any; editOnly?: boolean }[] = [
+const TABS: { key: TabKey; label: string; icon: any; editOnly?: boolean; createOnly?: boolean }[] = [
   { key: "quick", label: "Quick Lead", icon: Zap },
   { key: "detailed", label: "Detailed Form", icon: FileText },
-  { key: "sales", label: "Sales / Pipeline", icon: Activity },
+  { key: "sales", label: "Sales / Pipeline", icon: Activity, createOnly: true },
   { key: "visits", label: "Visits", icon: MapPin },
   { key: "notes", label: "Discussion & Notes", icon: MessagesSquare },
   { key: "setup", label: "Customer Setup", icon: Rocket, editOnly: true },
