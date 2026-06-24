@@ -444,26 +444,30 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
                   <Label>Business Name *</Label>
                   <Input value={quick.business} onChange={(e) => updateQ("business", e.target.value)} placeholder="Spice Route Restaurant" />
                 </div>
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label>Address</Label>
-                    <Input value={quick.address} onChange={(e) => updateQ("address", e.target.value)} placeholder="Adajan, Surat" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Assigned To</Label>
-                    <AssignedToCombobox
-                      value={quick.assignedTo}
-                      onChange={(v) => updateQ("assignedTo", v)}
-                      options={ACTIVE_SALES_TEAM}
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label>Lead Date</Label>
+                  <Input type="date" value={quick.leadDate} onChange={(e) => updateQ("leadDate", e.target.value)} />
+                  <p className="text-[11px] text-muted-foreground">When the lead actually came in.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Address</Label>
+                  <Input value={quick.address} onChange={(e) => updateQ("address", e.target.value)} placeholder="Adajan, Surat" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Assigned To</Label>
+                  <AssignedToCombobox
+                    value={quick.assignedTo}
+                    onChange={(v) => updateQ("assignedTo", v)}
+                    options={ACTIVE_SALES_TEAM}
+                  />
                 </div>
               </div>
 
-              <div className="mt-4 rounded-lg bg-primary/[0.04] border border-primary/15 px-3 py-2 text-xs text-muted-foreground">
-                Will auto-assign status <span className="font-medium text-foreground">New Lead</span> ·{" "}
-                <span className="font-medium text-foreground">Manual Entry</span>
-              </div>
+              {!isEdit && (
+                <div className="mt-4 rounded-lg bg-primary/[0.04] border border-primary/15 px-3 py-2 text-xs text-muted-foreground">
+                  Will auto-assign status <span className="font-medium text-foreground">New Lead</span>
+                </div>
+              )}
             </section>
           </div>
         )}
