@@ -485,6 +485,18 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
                     <div className="space-y-1.5"><Label>Client Name</Label><Input value={form.name} onChange={(e) => updateD("name", e.target.value)} /></div>
                     <div className="space-y-1.5"><Label>Phone Number</Label><Input value={form.phone} onChange={(e) => updateD("phone", e.target.value)} /></div>
                     <div className="space-y-1.5 md:col-span-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => updateD("email", e.target.value)} /></div>
+                    <div className="space-y-1.5">
+                      <Label>Lead Date</Label>
+                      <Input type="date" value={form.leadDate} onChange={(e) => updateD("leadDate", e.target.value)} />
+                      <p className="text-[11px] text-muted-foreground">When the lead actually came in.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Lead Source</Label>
+                      <Select value={form.source} onValueChange={(v) => updateD("source", v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>{SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
