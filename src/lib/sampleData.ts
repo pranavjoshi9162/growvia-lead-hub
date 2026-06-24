@@ -112,13 +112,22 @@ export interface TimelineEntry {
   id: string;
   timestamp: string;
   kind?: TimelineKind;
+  /** "created" marker for the Lead Created event, distinct from a status change. */
+  event?: "created" | "status_change" | "visit" | "note";
   status?: LeadStatus;
   substatus?: string;
+  /** When this status / event actually happened (may differ from `timestamp` which is record time). */
+  statusDate?: string;
+  /** Previous status / substatus, populated on status changes for human-readable diffs. */
+  prevStatus?: LeadStatus;
+  prevSubstatus?: string;
   notes?: string;
   followUpDate?: string;
   visitType?: VisitType;
   visitStatus?: VisitStatus;
   assignedTo?: string;
+  /** Name of the user who logged this entry. */
+  actor?: string;
 }
 
 export type BusinessType = "Restaurant" | "Salon" | "Bar" | "Cafe" | "Gym" | "Other";
