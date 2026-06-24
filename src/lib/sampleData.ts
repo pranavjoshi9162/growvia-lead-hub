@@ -23,14 +23,9 @@ export const LEAD_STATUSES: LeadStatus[] = [
 ];
 
 export const SUBSTATUS_MAP: Record<LeadStatus, string[]> = {
-  "New Lead": [
-    "Website Inquiry",
-    "Referral",
-    "SEO Lead",
-    "Instagram Lead",
-    "YouTube Lead",
-    "Manual Entry",
-  ],
+  // "New Lead" has no substatus — the Source is the channel of origin
+  // and stays permanent on the lead. Avoid duplicating it as a substatus.
+  "New Lead": [],
   Contacted: [
     "Cold Call",
     "Callback Later",
