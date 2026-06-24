@@ -783,6 +783,7 @@ export default function AllLeads() {
         initialStatus={statusDialog.initial}
         initialSubstatus={statusDialog.initialSubstatus}
         title={statusDialog.title}
+        editLastMode={statusDialog.editLastMode}
       />
       <ScheduleVisitDialog
         open={visitDialog.open}
