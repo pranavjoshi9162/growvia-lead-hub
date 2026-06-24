@@ -326,15 +326,12 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
       .filter(Boolean)
       .join("\n") || undefined;
 
-    const patch: Partial<Lead> = {
+    const patchBase: Partial<Lead> = {
       name: f.name.trim() || "Unnamed Lead",
       phone: f.phone.trim(),
       email: f.email.trim(),
       business: f.business.trim() || "—",
       source: f.source,
-      status: f.status,
-      substatus: f.substatus || undefined,
-      nextFollowUp: f.nextFollowUp ? new Date(f.nextFollowUp).toISOString() : undefined,
       assignedTo: f.assignedTo,
       outletAddress: address || undefined,
       outletsCount: f.outletsCount ? Number(f.outletsCount) : undefined,
@@ -346,7 +343,10 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
     };
 
     if (isEdit && editingLead) {
-      updateLead(editingLead.id, { ...patch, potential: editingLead.potential });
+      // Edit Lead must NOT change pipeline status, substatus or follow-up date.
+      // Those live in the Change Status flow and are the source of truth for timeline history.
+      const createdAt = f.leadDate ? new Date(f.leadDate).toISOString() : editingLead.createdAt;
+      updateLead(editingLead.id, { ...patchBase, potential: editingLead.potential, createdAt });
       if (f.visitDate) {
         const dateIso = new Date(`${f.visitDate}T${f.visitTime || "10:00"}`).toISOString();
         scheduleVisit(editingLead.id, {
@@ -362,10 +362,18 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
       return;
     }
 
+    const createPatch: Partial<Lead> = {
+      ...patchBase,
+      status: f.status,
+      substatus: f.substatus || undefined,
+      nextFollowUp: f.nextFollowUp ? new Date(f.nextFollowUp).toISOString() : undefined,
+    };
+    const createdAt = f.leadDate ? new Date(f.leadDate).toISOString() : new Date().toISOString();
     const newId = addLead({
-      ...(patch as Parameters<typeof addLead>[0]),
+      ...(createPatch as Parameters<typeof addLead>[0]),
       potential: "High" as Potential,
       notes: undefined,
+      createdAt,
     });
 
     if (f.visitDate) {
