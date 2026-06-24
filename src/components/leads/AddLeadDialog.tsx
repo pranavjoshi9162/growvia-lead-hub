@@ -406,7 +406,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
 
           {/* Tabs */}
           <div className="mt-4 flex flex-wrap gap-1 rounded-lg border bg-muted/40 p-1 self-start">
-            {TABS.filter((t) => !t.editOnly || isEdit).map((t) => {
+            {TABS.filter((t) => (!t.editOnly || isEdit) && (!t.createOnly || !isEdit)).map((t) => {
               const Icon = t.icon;
               const active = tab === t.key;
               return (
