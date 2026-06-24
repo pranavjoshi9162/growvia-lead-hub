@@ -73,6 +73,7 @@ export default function AllLeads() {
     initial?: LeadStatus;
     initialSubstatus?: string;
     title?: string;
+    editLastMode?: boolean;
   }>({ open: false, lead: null });
   const [visitDialog, setVisitDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
