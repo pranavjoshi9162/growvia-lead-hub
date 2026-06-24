@@ -192,6 +192,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
         business: editingLead.business,
         address: editingLead.outletAddress ?? "",
         assignedTo: editingLead.assignedTo,
+        leadDate: editingLead.createdAt ? new Date(editingLead.createdAt).toISOString().slice(0, 10) : todayInput(),
       });
       const src = SOURCES.includes(editingLead.source) ? editingLead.source : SOURCES[0];
       const subs = SUBSTATUS_MAP[editingLead.status] ?? [];
@@ -204,6 +205,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
         name: editingLead.name,
         phone: editingLead.phone,
         email: editingLead.email,
+        leadDate: editingLead.createdAt ? new Date(editingLead.createdAt).toISOString().slice(0, 10) : todayInput(),
         business: editingLead.business,
         businessType: editingLead.businessType ?? "",
         outlets: primaryOutlet,
