@@ -267,6 +267,7 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
       toast.info("Now schedule the visit");
       return;
     }
+    const createdAt = quick.leadDate ? new Date(quick.leadDate).toISOString() : new Date().toISOString();
     addLead({
       name: quick.name.trim(),
       phone: quick.phone.trim(),
@@ -275,11 +276,12 @@ export function AddLeadDialog({ open, onOpenChange, editingLead }: Props) {
       source: "Manual Entry",
       potential: "High",
       status: "New Lead",
-      substatus: "Manual Entry",
+      substatus: undefined,
       assignedTo: quick.assignedTo,
       outletAddress: quick.address.trim() || undefined,
+      createdAt,
     });
-    toast.success("Lead added — New Lead · Manual Entry");
+    toast.success("Lead added — New Lead");
     close();
   };
 
