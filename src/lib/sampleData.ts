@@ -464,6 +464,23 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "t2", kind: "status", status: "Demo", substatus: "Demo Completed", timestamp: d(-8) },
       { id: "t3", kind: "trial", status: "Trial", substatus: "Trial Active", timestamp: d(-4), followUpDate: d(4) },
     ],
+    subscription: {
+      cycle: "Trial",
+      planName: "Gold",
+      outlets: 1,
+      unitPrice: 7999,
+      amount: 7999,
+      paymentStatus: "Trial",
+      subscriptionStatus: "Trial Active",
+      trialStart: d(-4),
+      trialEnd: d(10),
+      history: [
+        { id: "b1", date: d(-4), description: "Trial Started (14 Days)", amount: 0, status: "Paid" },
+      ],
+      events: [
+        { id: "e1", timestamp: d(-4), event: "Trial Started", actor: "Aisha Khan", notes: "14 day trial" },
+      ],
+    },
   },
   {
     id: "L-1008",
