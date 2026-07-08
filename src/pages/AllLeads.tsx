@@ -78,6 +78,7 @@ export default function AllLeads() {
     editLastMode?: boolean;
   }>({ open: false, lead: null });
   const [visitDialog, setVisitDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
+  const [billingDialog, setBillingDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const [searchParams, setSearchParams] = useSearchParams();
