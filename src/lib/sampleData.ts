@@ -187,6 +187,66 @@ export const AVAILABLE_PLANS: { name: string; price: number }[] = [
   { name: "Platinum", price: 14999 },
 ];
 
+// ---------- Billing & Subscription ----------
+export type BillingCycle = "Trial" | "Monthly" | "Yearly";
+export type BillingPaymentStatus = "Pending" | "Paid" | "Overdue" | "Trial";
+export type SubscriptionStatus =
+  | "Trial Active"
+  | "Trial Expired"
+  | "Active"
+  | "Renewal Due"
+  | "Suspended";
+export type BillingPaymentMethod =
+  | "Razorpay"
+  | "QR Payment"
+  | "Cash"
+  | "Bank Transfer";
+
+export const BILLING_PAYMENT_METHODS: BillingPaymentMethod[] = [
+  "Razorpay",
+  "QR Payment",
+  "Cash",
+  "Bank Transfer",
+];
+
+export interface BillingTxn {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  method?: BillingPaymentMethod;
+  status: "Paid" | "Pending" | "Failed";
+  reference?: string;
+}
+
+export interface SubscriptionEvent {
+  id: string;
+  timestamp: string;
+  event: string;
+  actor?: string;
+  notes?: string;
+}
+
+export interface Subscription {
+  cycle: BillingCycle;
+  planName: string;
+  outlets: number;
+  unitPrice: number;
+  amount: number;
+  paymentStatus: BillingPaymentStatus;
+  subscriptionStatus: SubscriptionStatus;
+  paymentMethod?: BillingPaymentMethod;
+  lastPaidDate?: string;
+  lastReference?: string;
+  trialStart?: string;
+  trialEnd?: string;
+  subscriptionStart?: string;
+  nextRenewalDate?: string;
+  history: BillingTxn[];
+  events: SubscriptionEvent[];
+}
+
+
 export interface Lead {
   id: string;
   name: string;
@@ -214,6 +274,8 @@ export interface Lead {
   demoDate?: string;
   demoOutcome?: string;
   customerSetup?: CustomerSetup;
+  subscription?: Subscription;
+
 }
 
 const today = new Date();
@@ -316,6 +378,28 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "t3", kind: "trial", status: "Trial", substatus: "Trial Started", timestamp: d(-18) },
       { id: "t4", kind: "status", status: "Converted", substatus: "Onboarding", timestamp: d(-3), notes: "Onboarded successfully." },
     ],
+    subscription: {
+      cycle: "Monthly",
+      planName: "Gold",
+      outlets: 2,
+      unitPrice: 7999,
+      amount: 15998,
+      paymentStatus: "Paid",
+      subscriptionStatus: "Active",
+      paymentMethod: "Razorpay",
+      lastPaidDate: d(-3),
+      lastReference: "rzp_9AK12N4",
+      subscriptionStart: d(-3),
+      nextRenewalDate: d(27),
+      history: [
+        { id: "b1", date: d(-18), description: "Trial Started (14 Days)", amount: 0, status: "Paid" },
+        { id: "b2", date: d(-3), description: "Trial Converted · Monthly · Gold × 2 outlets", amount: 15998, method: "Razorpay", status: "Paid", reference: "rzp_9AK12N4" },
+      ],
+      events: [
+        { id: "e1", timestamp: d(-18), event: "Trial Started", notes: "14 day trial" },
+        { id: "e2", timestamp: d(-3), event: "Trial Converted", actor: "Aisha Khan", notes: "Monthly · Gold" },
+      ],
+    },
   },
   {
     id: "L-1005",
@@ -380,6 +464,23 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "t2", kind: "status", status: "Demo", substatus: "Demo Completed", timestamp: d(-8) },
       { id: "t3", kind: "trial", status: "Trial", substatus: "Trial Active", timestamp: d(-4), followUpDate: d(4) },
     ],
+    subscription: {
+      cycle: "Trial",
+      planName: "Gold",
+      outlets: 1,
+      unitPrice: 7999,
+      amount: 7999,
+      paymentStatus: "Trial",
+      subscriptionStatus: "Trial Active",
+      trialStart: d(-4),
+      trialEnd: d(10),
+      history: [
+        { id: "b1", date: d(-4), description: "Trial Started (14 Days)", amount: 0, status: "Paid" },
+      ],
+      events: [
+        { id: "e1", timestamp: d(-4), event: "Trial Started", actor: "Aisha Khan", notes: "14 day trial" },
+      ],
+    },
   },
   {
     id: "L-1008",

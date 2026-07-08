@@ -21,6 +21,8 @@ import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { StatusUpdateDialog } from "@/components/leads/StatusUpdateDialog";
 import { ScheduleVisitDialog } from "@/components/leads/ScheduleVisitDialog";
 import { LeadTimeline } from "@/components/leads/LeadTimeline";
+import { BillingCard } from "@/components/billing/BillingCard";
+import { BillingDialog } from "@/components/billing/BillingDialog";
 import { History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MetricCard, GLASS_SURFACES } from "@/components/dashboard/MetricCard";
@@ -76,6 +78,7 @@ export default function AllLeads() {
     editLastMode?: boolean;
   }>({ open: false, lead: null });
   const [visitDialog, setVisitDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
+  const [billingDialog, setBillingDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -751,6 +754,7 @@ export default function AllLeads() {
                                   </ul>
                                 )}
                               </div>
+                              <BillingCard lead={l} onOpen={() => setBillingDialog({ open: true, lead: l })} />
                             </div>
                           </div>
                         </td>
@@ -789,6 +793,11 @@ export default function AllLeads() {
         open={visitDialog.open}
         onOpenChange={(v) => setVisitDialog((s) => ({ ...s, open: v }))}
         lead={visitDialog.lead}
+      />
+      <BillingDialog
+        open={billingDialog.open}
+        onOpenChange={(v) => setBillingDialog((s) => ({ ...s, open: v }))}
+        lead={billingDialog.lead ? leads.find((x) => x.id === billingDialog.lead!.id) ?? billingDialog.lead : null}
       />
     </div>
   );

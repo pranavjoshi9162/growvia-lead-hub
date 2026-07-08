@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, ReactNode } from "react";
-import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry, Visit, VisitStatus } from "@/lib/sampleData";
+import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry, Visit, VisitStatus, Subscription, BillingTxn, SubscriptionEvent } from "@/lib/sampleData";
 import { useAuth } from "@/context/AuthContext";
 
 interface SetStatusOptions {
@@ -29,6 +29,12 @@ interface LeadsCtx {
   updateVisitStatus: (leadId: string, visitId: string, status: VisitStatus, notes?: string) => void;
   /** Admin-only: correct the most recent status change in place (no new timeline record). */
   editLastStatus: (id: string, patch: EditLastStatusPatch) => void;
+  /** Billing: replace or patch subscription. */
+  updateSubscription: (id: string, patch: Partial<Subscription>) => void;
+  /** Billing: append a payment / billing transaction. */
+  addBillingTxn: (id: string, txn: Omit<BillingTxn, "id">) => void;
+  /** Billing: append a subscription lifecycle event. */
+  addSubscriptionEvent: (id: string, event: Omit<SubscriptionEvent, "id" | "timestamp"> & { timestamp?: string }) => void;
 }
 
 const Ctx = createContext<LeadsCtx | null>(null);
@@ -225,8 +231,53 @@ export function LeadsProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updateSubscription: LeadsCtx["updateSubscription"] = (id, patch) => {
+    setLeads((prev) =>
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        const base: Subscription = l.subscription ?? {
+          cycle: "Trial",
+          planName: "—",
+          outlets: 1,
+          unitPrice: 0,
+          amount: 0,
+          paymentStatus: "Pending",
+          subscriptionStatus: "Trial Active",
+          history: [],
+          events: [],
+        };
+        return { ...l, subscription: { ...base, ...patch } };
+      })
+    );
+  };
+
+  const addBillingTxn: LeadsCtx["addBillingTxn"] = (id, txn) => {
+    setLeads((prev) =>
+      prev.map((l) => {
+        if (!l.subscription || l.id !== id) return l;
+        const t: BillingTxn = { ...txn, id: `b${l.subscription.history.length + 1}` };
+        return { ...l, subscription: { ...l.subscription, history: [...l.subscription.history, t] } };
+      })
+    );
+  };
+
+  const addSubscriptionEvent: LeadsCtx["addSubscriptionEvent"] = (id, event) => {
+    setLeads((prev) =>
+      prev.map((l) => {
+        if (!l.subscription || l.id !== id) return l;
+        const e: SubscriptionEvent = {
+          ...event,
+          id: `e${l.subscription.events.length + 1}`,
+          timestamp: event.timestamp ?? new Date().toISOString(),
+          actor: event.actor ?? actor,
+        };
+        return { ...l, subscription: { ...l.subscription, events: [...l.subscription.events, e] } };
+      })
+    );
+  };
+
   return (
-    <Ctx.Provider value={{ leads, addLead, updateLead, appendTimeline, setStatus, scheduleVisit, updateVisitStatus, editLastStatus }}>
+    <Ctx.Provider value={{ leads, addLead, updateLead, appendTimeline, setStatus, scheduleVisit, updateVisitStatus, editLastStatus, updateSubscription, addBillingTxn, addSubscriptionEvent }}>
       {children}
     </Ctx.Provider>
   );
