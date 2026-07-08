@@ -43,7 +43,7 @@ function SectionCard({
 }
 
 export function CustomerSetupTab({ lead }: Props) {
-  const { updateLead, setStatus, appendTimeline } = useLeads();
+  const { updateLead, setStatus, appendTimeline, updateSubscription, addSubscriptionEvent, addBillingTxn } = useLeads();
   const initial: CustomerSetup = lead.customerSetup ?? {
     status: "Pending",
     outletsPurchased: 1,
