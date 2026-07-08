@@ -152,9 +152,56 @@ export function CustomerSetupTab({ lead }: Props) {
       createdAt: new Date().toISOString(),
     });
 
-    if (cs.subscriptionType === "Trial") {
+    // Seed Billing & Subscription so future commercial operations happen there.
+    const nowIso = new Date().toISOString();
+    const trialDays = merged.trialDuration === "Custom"
+      ? (merged.trialDays ?? 14)
+      : merged.trialDuration === "7 Days" ? 7
+      : merged.trialDuration === "30 Days" ? 30
+      : 14;
+    const addDaysIso = (n: number) => { const dt = new Date(); dt.setDate(dt.getDate() + n); return dt.toISOString(); };
+    const addMonthsIso = (n: number) => { const dt = new Date(); dt.setMonth(dt.getMonth() + n); return dt.toISOString(); };
+
+    if (merged.subscriptionType === "Trial") {
+      const planName = merged.planMode === "New" ? (merged.newPlanName ?? "Trial Plan") : (merged.existingPlan ?? "Trial Plan");
+      const unit = merged.planMode === "New" ? (merged.newPlanPrice ?? 0) : (merged.planPrice ?? 0);
+      updateSubscription(lead.id, {
+        cycle: "Trial",
+        planName,
+        outlets: merged.outletsPurchased ?? 1,
+        unitPrice: unit,
+        amount: unit * (merged.outletsPurchased ?? 1),
+        paymentStatus: "Trial",
+        subscriptionStatus: "Trial Active",
+        trialStart: nowIso,
+        trialEnd: addDaysIso(trialDays),
+        history: [{ id: "b1", date: nowIso, description: `Trial Started (${trialDays} Days)`, amount: 0, status: "Paid" }],
+        events: [{ id: "e1", timestamp: nowIso, event: "Trial Started", notes: `${trialDays} day trial` }],
+      });
       setStatus(lead.id, "Trial", { substatus: "Trial Started", notes: "Customer Setup: Trial workspace created" });
     } else {
+      const planName = merged.planMode === "New" ? (merged.newPlanName ?? "Custom Plan") : (merged.existingPlan ?? "—");
+      const unit = merged.planMode === "New" ? (merged.newPlanPrice ?? 0) : (merged.planPrice ?? 0);
+      const outlets = merged.outletsPurchased ?? 1;
+      const amount = unit * outlets;
+      const isYear = merged.subscriptionType === "Yearly" || merged.newPlanCycle === "Yearly";
+      updateSubscription(lead.id, {
+        cycle: isYear ? "Yearly" : "Monthly",
+        planName,
+        outlets,
+        unitPrice: unit,
+        amount,
+        paymentStatus: merged.paymentCompleted ? "Paid" : "Pending",
+        subscriptionStatus: "Active",
+        paymentMethod: merged.paymentMethod === "Online Payment" ? "Razorpay" : merged.paymentMethod === "QR Payment" ? "QR Payment" : "Cash",
+        lastPaidDate: merged.paymentCompleted ? nowIso : undefined,
+        subscriptionStart: nowIso,
+        nextRenewalDate: isYear ? addMonthsIso(12) : addMonthsIso(1),
+        history: merged.paymentCompleted
+          ? [{ id: "b1", date: nowIso, description: `Initial ${isYear ? "Yearly" : "Monthly"} · ${planName} × ${outlets}`, amount, method: merged.paymentMethod === "Online Payment" ? "Razorpay" : merged.paymentMethod === "QR Payment" ? "QR Payment" : "Cash", status: "Paid" }]
+          : [],
+        events: [{ id: "e1", timestamp: nowIso, event: `${isYear ? "Yearly" : "Monthly"} Activated`, notes: `${planName} · ${outlets} outlet(s)` }],
+      });
       appendTimeline(lead.id, {
         kind: "status",
         status: lead.status,
