@@ -187,6 +187,66 @@ export const AVAILABLE_PLANS: { name: string; price: number }[] = [
   { name: "Platinum", price: 14999 },
 ];
 
+// ---------- Billing & Subscription ----------
+export type BillingCycle = "Trial" | "Monthly" | "Yearly";
+export type BillingPaymentStatus = "Pending" | "Paid" | "Overdue" | "Trial";
+export type SubscriptionStatus =
+  | "Trial Active"
+  | "Trial Expired"
+  | "Active"
+  | "Renewal Due"
+  | "Suspended";
+export type BillingPaymentMethod =
+  | "Razorpay"
+  | "QR Payment"
+  | "Cash"
+  | "Bank Transfer";
+
+export const BILLING_PAYMENT_METHODS: BillingPaymentMethod[] = [
+  "Razorpay",
+  "QR Payment",
+  "Cash",
+  "Bank Transfer",
+];
+
+export interface BillingTxn {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  method?: BillingPaymentMethod;
+  status: "Paid" | "Pending" | "Failed";
+  reference?: string;
+}
+
+export interface SubscriptionEvent {
+  id: string;
+  timestamp: string;
+  event: string;
+  actor?: string;
+  notes?: string;
+}
+
+export interface Subscription {
+  cycle: BillingCycle;
+  planName: string;
+  outlets: number;
+  unitPrice: number;
+  amount: number;
+  paymentStatus: BillingPaymentStatus;
+  subscriptionStatus: SubscriptionStatus;
+  paymentMethod?: BillingPaymentMethod;
+  lastPaidDate?: string;
+  lastReference?: string;
+  trialStart?: string;
+  trialEnd?: string;
+  subscriptionStart?: string;
+  nextRenewalDate?: string;
+  history: BillingTxn[];
+  events: SubscriptionEvent[];
+}
+
+
 export interface Lead {
   id: string;
   name: string;
