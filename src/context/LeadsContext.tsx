@@ -29,6 +29,12 @@ interface LeadsCtx {
   updateVisitStatus: (leadId: string, visitId: string, status: VisitStatus, notes?: string) => void;
   /** Admin-only: correct the most recent status change in place (no new timeline record). */
   editLastStatus: (id: string, patch: EditLastStatusPatch) => void;
+  /** Billing: replace or patch subscription. */
+  updateSubscription: (id: string, patch: Partial<Subscription>) => void;
+  /** Billing: append a payment / billing transaction. */
+  addBillingTxn: (id: string, txn: Omit<BillingTxn, "id">) => void;
+  /** Billing: append a subscription lifecycle event. */
+  addSubscriptionEvent: (id: string, event: Omit<SubscriptionEvent, "id" | "timestamp"> & { timestamp?: string }) => void;
 }
 
 const Ctx = createContext<LeadsCtx | null>(null);
