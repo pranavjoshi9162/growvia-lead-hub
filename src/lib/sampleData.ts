@@ -378,6 +378,28 @@ export const SAMPLE_LEADS: Lead[] = [
       { id: "t3", kind: "trial", status: "Trial", substatus: "Trial Started", timestamp: d(-18) },
       { id: "t4", kind: "status", status: "Converted", substatus: "Onboarding", timestamp: d(-3), notes: "Onboarded successfully." },
     ],
+    subscription: {
+      cycle: "Monthly",
+      planName: "Gold",
+      outlets: 2,
+      unitPrice: 7999,
+      amount: 15998,
+      paymentStatus: "Paid",
+      subscriptionStatus: "Active",
+      paymentMethod: "Razorpay",
+      lastPaidDate: d(-3),
+      lastReference: "rzp_9AK12N4",
+      subscriptionStart: d(-3),
+      nextRenewalDate: d(27),
+      history: [
+        { id: "b1", date: d(-18), description: "Trial Started (14 Days)", amount: 0, status: "Paid" },
+        { id: "b2", date: d(-3), description: "Trial Converted · Monthly · Gold × 2 outlets", amount: 15998, method: "Razorpay", status: "Paid", reference: "rzp_9AK12N4" },
+      ],
+      events: [
+        { id: "e1", timestamp: d(-18), event: "Trial Started", notes: "14 day trial" },
+        { id: "e2", timestamp: d(-3), event: "Trial Converted", actor: "Aisha Khan", notes: "Monthly · Gold" },
+      ],
+    },
   },
   {
     id: "L-1005",
