@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, ReactNode } from "react";
-import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry, Visit, VisitStatus } from "@/lib/sampleData";
+import { Lead, LeadStatus, SAMPLE_LEADS, TimelineEntry, Visit, VisitStatus, Subscription, BillingTxn, SubscriptionEvent } from "@/lib/sampleData";
 import { useAuth } from "@/context/AuthContext";
 
 interface SetStatusOptions {
