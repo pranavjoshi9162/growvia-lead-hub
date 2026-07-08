@@ -754,6 +754,7 @@ export default function AllLeads() {
                                   </ul>
                                 )}
                               </div>
+                              <BillingCard lead={l} onOpen={() => setBillingDialog({ open: true, lead: l })} />
                             </div>
                           </div>
                         </td>
