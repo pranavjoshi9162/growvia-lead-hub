@@ -794,6 +794,11 @@ export default function AllLeads() {
         onOpenChange={(v) => setVisitDialog((s) => ({ ...s, open: v }))}
         lead={visitDialog.lead}
       />
+      <BillingDialog
+        open={billingDialog.open}
+        onOpenChange={(v) => setBillingDialog((s) => ({ ...s, open: v }))}
+        lead={billingDialog.lead ? leads.find((x) => x.id === billingDialog.lead!.id) ?? billingDialog.lead : null}
+      />
     </div>
   );
 }
