@@ -21,6 +21,8 @@ import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
 import { StatusUpdateDialog } from "@/components/leads/StatusUpdateDialog";
 import { ScheduleVisitDialog } from "@/components/leads/ScheduleVisitDialog";
 import { LeadTimeline } from "@/components/leads/LeadTimeline";
+import { BillingCard } from "@/components/billing/BillingCard";
+import { BillingDialog } from "@/components/billing/BillingDialog";
 import { History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MetricCard, GLASS_SURFACES } from "@/components/dashboard/MetricCard";
