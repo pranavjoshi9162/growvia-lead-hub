@@ -274,6 +274,8 @@ export interface Lead {
   demoDate?: string;
   demoOutcome?: string;
   customerSetup?: CustomerSetup;
+  subscription?: Subscription;
+
 }
 
 const today = new Date();
